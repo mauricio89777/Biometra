@@ -1,0 +1,58 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  color: #f8fafc;
+}
+
+/* Animación brillante de Neón/Pulso para Biometra */
+@keyframes glowPulse {
+  0% {
+    filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.9));
+  }
+  100% {
+    filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.6));
+  }
+}
+
+.animated-title {
+  animation: glowPulse 3s infinite ease-in-out;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+
+
+/* Animación de letras que flotan hacia arriba al pasar el ratón */
+.logo-letter {
+  display: inline-block;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.logo-container:hover .logo-letter {
+  transform: translateY(-8px);
+}
+
+/* Retraso en cascada para que cada letra se mueva una tras otra */
+.logo-container:hover .logo-letter:nth-child(1) { transition-delay: 0.02s; }
+.logo-container:hover .logo-letter:nth-child(2) { transition-delay: 0.05s; }
+.logo-container:hover .logo-letter:nth-child(3) { transition-delay: 0.08s; }
+.logo-container:hover .logo-letter:nth-child(4) { transition-delay: 0.11s; }
+.logo-container:hover .logo-letter:nth-child(5) { transition-delay: 0.14s; }
+.logo-container:hover .logo-letter:nth-child(6) { transition-delay: 0.17s; }
+.logo-container:hover .logo-letter:nth-child(7) { transition-delay: 0.20s; }
+.logo-container:hover .logo-letter:nth-child(8) { transition-delay: 0.23s; }
