@@ -1,283 +1,468 @@
-import React, { useState, useEffect } from 'react';
-import Login from './login';
+import React, { useState } from 'react';
+import Login from './Login';
+import Gps from './Gps'; 
+import Ejercicios from './ejercicios';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('gyms');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isLogoHovered, setIsLogoHovered] = useState(false);
+  
+  // Estado para controlar qué página se muestra: 'home', 'gps' o 'ejercicios'
+  const [currentView, setCurrentView] = useState('app');
 
-  // Slides de Bienvenida y Tips (Carrusel de 5 segundos)
-  const slides = [
-    {
-      title: "Plataforma de Análisis Biomecánico y Entrenamiento",
-      subtitle: "Encuentra centros de entrenamiento especializados y consulta nuestro catálogo de ejecución técnica."
-    },
-    {
-      title: "Tip Biomecánico: Control del Tiempo bajo Tensión (TUT)",
-      subtitle: "Mantén una fase excéntrica de 2 a 3 segundos en tus levantamientos para maximizar la hipertrofia y reducir lesiones."
-    },
-    {
-      title: "Optimiza tu Recuperación Muscular",
-      subtitle: "Asegura entre 7 y 9 horas de sueño nocturno y consume 1.6g a 2.2g de proteína por kg de peso corporal al día."
-    },
-    {
-      title: "Principio de Sobrecarga Progresiva",
-      subtitle: "Para seguir registrando ganancias de fuerza, incrementa gradualmente el peso, las repeticiones o la calidad técnica semana a semana."
-    }
-  ];
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+  };
 
-  useEffect(() => {
-    if (!currentUser) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prevSlide) => (prevSlide + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [currentUser, slides.length]);
+  const handleLogout = () => {
+    setCurrentUser(null);
+  };
 
-  // Si NO hay sesión iniciada, muestra exclusivamente el Login
+  // 1. SI NO HAY USUARIO: Muestra la pantalla de Login
   if (!currentUser) {
-    return <Login onLoginSuccess={(user) => setCurrentUser(user)} />;
+    return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  const gyms = [
-    {
-      id: 1,
-      name: 'PowerGym San Joaquín',
-      location: 'Av. Vicuña Mackenna 4686, San Joaquín',
-      schedule: 'Lunes a Viernes: 07:00 - 22:00 | Sábados: 09:00 - 18:00',
-      services: 'Zona de Pesas, Cardio, Entrenamiento Guiado, Evaluación Física',
-      contact: '+56 9 1234 5678 - contacto@powergym.cl',
-      description: 'Centro de alto rendimiento enfocado en musculación y acondicionamiento físico con acompañamiento técnico.'
-    },
-    {
-      id: 2,
-      name: 'Biometra Fitness Center',
-      location: 'Alameda 1340, Santiago Centro',
-      schedule: 'Lunes a Domingo: 06:00 - 23:00',
-      services: 'Visión Computacional, Análisis Biomecánico, Zona Funcional, Calistenia',
-      contact: '+56 9 8765 4321 - soporte@biometra.cl',
-      description: 'Gimnasio inteligente equipado con sensores y análisis biomecánico en tiempo real para corrección postural.'
-    },
-    {
-      id: 3,
-      name: 'CrossFit Performance Hub',
-      location: 'Av. Italia 1120, Providencia',
-      schedule: 'Lunes a Sábado: 07:00 - 21:00',
-      services: 'CrossFit, Halterofilia, Gimnasia Deportiva, Coaching Personalizado',
-      contact: '+56 9 5555 4444 - providencia@crossfithub.cl',
-      description: 'Especialistas en fuerza, resistencia física y preparación de atletas de alto desempeño.'
-    }
-  ];
+  // 2. SI LA VISTA ES 'gps': Renderiza la página Gps.jsx
+  if (currentView === 'gps') {
+    return (
+      <div>
+        {/* Botón flotante para regresar a la página principal */}
+        <button 
+          onClick={() => setCurrentView('home')}
+          style={{
+            position: 'fixed',
+            top: '15px',
+            left: '15px',
+            zIndex: 9999,
+            backgroundColor: '#000000',
+            color: '#FFFFFF',
+            border: 'none',
+            padding: '0.6rem 1.2rem',
+            borderRadius: '6px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+          }}>
+          ← Volver a Biometra
+        </button>
+        <Gps onNavigate={setCurrentView} />
+      </div>
+    );
+  }
 
-  const exercises = [
-    {
-      id: 1,
-      name: 'Sentadilla Libre (Barbell Squat)',
-      muscle: 'Cuádriceps, Glúteos e Isquiotibiales',
-      difficulty: 'Intermedio',
-      type: 'Fuerza / Biomecánico',
-      instructions: '1. Coloca la barra sobre los trapecios.\n2. Mantén la espalda recta y baja flexionando rodillas y cadera.\n3. Asegúrate de que las rodillas no colapsen hacia adentro.\n4. Desciende hasta romper el paralelo de 90° y sube empujando con los talones.'
-    },
-    {
-      id: 2,
-      name: 'Press de Banca Plano',
-      muscle: 'Pectoral Mayor, Tríceps y Deltoides Anterior',
-      difficulty: 'Avanzado',
-      type: 'Fuerza',
-      instructions: '1. Acuéstate en el banco manteniendo 5 puntos de apoyo.\n2. Sujeta la barra ligeramente más ancho que los hombros.\n3. Baja la barra de forma controlada al esternón.\n4. Empuja explosivamente hacia arriba sin despegar la cadera.'
-    },
-    {
-      id: 3,
-      name: 'Dominadas Pronadas (Pull-ups)',
-      muscle: 'Dorsal Ancho, Biceps y Core',
-      difficulty: 'Intermedio',
-      type: 'Calistenia',
-      instructions: '1. Sujétate de la barra con las palmas mirando hacia adelante.\n2. Eleva el cuerpo llevando el pecho hacia la barra.\n3. Evita el balanceo del cuerpo.\n4. Desciende lentamente hasta extender completamente los brazos.'
-    },
-    {
-      id: 4,
-      name: 'Peso Muerto Rumano',
-      muscle: 'Isquiotibiales, Glúteo Mayor y Lumbar',
-      difficulty: 'Avanzado',
-      type: 'Fuerza / Corrección Postural',
-      instructions: '1. Sostén la barra al ancho de caderas.\n2. Lleva la cadera hacia atrás manteniendo una leve flexión de rodilla.\n3. Baja la barra bordeando las piernas hasta la espinilla.\n4. Regresa contrayendo glúteos sin hiperextender la espalda.'
-    }
-  ];
+  // 3. SI LA VISTA ES 'ejercicios': Renderiza la página Ejercicios.jsx
+  if (currentView === 'ejercicios') {
+    return (
+      <div>
+        {/* Botón flotante para regresar a la página principal */}
+        <button 
+          onClick={() => setCurrentView('home')}
+          style={{
+            position: 'fixed',
+            top: '15px',
+            left: '15px',
+            zIndex: 9999,
+            backgroundColor: '#000000',
+            color: '#FFFFFF',
+            border: 'none',
+            padding: '0.6rem 1.2rem',
+            borderRadius: '6px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+          }}>
+          ← Volver a Biometra
+        </button>
+        <Ejercicios onNavigate={setCurrentView} />
+      </div>
+    );
+  }
 
-  const filteredGyms = gyms.filter(g =>
-    g.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    g.location.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Estilos CSS para animaciones del logo
+  const logoStyle = {
+    fontWeight: '900',
+    fontSize: '1.8rem',
+    letterSpacing: '-0.5px',
+    color: isLogoHovered ? '#00FF87' : '#FFFFFF',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.6rem',
+    cursor: 'pointer',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    transform: isLogoHovered ? 'scale(1.08) translateY(-2px)' : 'scale(1)',
+    textShadow: isLogoHovered ? '0 0 15px rgba(0, 255, 135, 0.6)' : 'none'
+  };
 
-  const filteredExercises = exercises.filter(e =>
-    e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.muscle.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
+  // 4. VISTA PRINCIPAL DE BIOMETRA (Home)
   return (
-    <div style={{ 
-      width: '100vw', 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column',
-      backgroundImage: 'linear-gradient(rgba(15, 23, 42, 0.88), rgba(15, 23, 42, 0.94)), url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1920&auto=format&fit=crop")',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundAttachment: 'fixed'
+    <div style={{
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      backgroundColor: '#0F172A',
+      color: '#F8FAFC',
+      minHeight: '100vh',
+      margin: 0,
+      padding: 0
     }}>
-      {/* Navegación */}
-      <nav style={{ width: '100%', backgroundColor: 'rgba(30, 41, 59, 0.9)', backdropFilter: 'blur(8px)', padding: '1.2rem 3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(51, 65, 85, 0.6)', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div className="logo-container">
-          <div className="logo-icon">B</div>
-          <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: '800', letterSpacing: '1px' }}>
-            {"Biometra".split("").map((letter, index) => (
-              <span key={index} className="logo-letter">{letter}</span>
-            ))}
-          </h1>
+      {/* BARRA DE NAVEGACIÓN SUPERIOR CORREGIDA */}
+      <nav style={{
+        backgroundColor: '#1E293B',
+        padding: '1rem 3rem',
+        display: 'flex',
+        justifyContent: 'space-between', // Corregido 'justify' por 'justifyContent'
+        alignItems: 'center',
+        borderBottom: '1px solid #334155',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        width: '100%',
+        boxSizing: 'border-box'
+      }}>
+        {/* LOGO BIOMETRA (Izquierda) */}
+        <div 
+          style={logoStyle}
+          onClick={() => setCurrentView('home')}
+          onMouseEnter={() => setIsLogoHovered(true)}
+          onMouseLeave={() => setIsLogoHovered(false)}
+        >
+          <span style={{ 
+            fontSize: '1.6rem',
+            transform: isLogoHovered ? 'rotate(-10deg) scale(1.15)' : 'rotate(0deg)',
+            transition: 'transform 0.3s ease'
+          }}>
+            🏋️‍♂️
+          </span>
+          <span style={{
+            background: isLogoHovered 
+              ? 'linear-gradient(90deg, #00FF87 0%, #60A5FA 100%)' 
+              : 'linear-gradient(90deg, #FFFFFF 0%, #E2E8F0 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            Biometra
+          </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button onClick={() => setActiveTab('gyms')} className={`nav-btn ${activeTab === 'gyms' ? 'active' : ''}`}>
-            Gimnasios
-          </button>
-          <button onClick={() => setActiveTab('exercises')} className={`nav-btn ${activeTab === 'exercises' ? 'active' : ''}`}>
+        {/* MENÚ DE ACCIONES Y PERFIL (Derecha con espacio holgado) */}
+        <div style={{ display: 'flex', gap: '1.8rem', alignItems: 'center' }}>
+          
+          <a href="#metricas" style={{ textDecoration: 'none', color: '#CBD5E1', fontWeight: '600', fontSize: '0.95rem' }}>
+            Sobre Nosotros
+          </a>
+          
+          {/* BOTÓN O ENLACE A EJERCICIOS */}
+          <button 
+            onClick={() => setCurrentView('ejercicios')}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              color: '#CBD5E1', 
+              fontWeight: '600', 
+              fontSize: '0.95rem', 
+              cursor: 'pointer',
+              padding: '0.4rem 0.6rem'
+            }}>
             Ejercicios
           </button>
+          
+          {/* BOTÓN MÉTRICAS BIOMECÁNICAS DIRIGE A GPS */}
+          <button 
+            onClick={() => setCurrentView('gps')}
+            style={{ 
+              backgroundColor: '#00FF87',
+              color: '#0F172A',
+              border: 'none',
+              padding: '0.6rem 1.2rem',
+              borderRadius: '8px',
+              fontWeight: '700', 
+              fontSize: '0.95rem', 
+              cursor: 'pointer',
+              boxShadow: '0 0 10px rgba(0, 255, 135, 0.3)'
+            }}>
+            Métricas Biomecánicas ↗
+          </button>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginLeft: '1rem', borderLeft: '1px solid #334155', paddingLeft: '1rem' }}>
-            <span style={{ color: '#38bdf8', fontSize: '0.9rem', fontWeight: 'bold' }}>
-              {currentUser.role === 'atleta' ? '🏋️‍♂️' : '🏢'} {currentUser.name}
+          {/* PERFIL Y SALIR */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.8rem',
+            backgroundColor: '#0F172A',
+            padding: '0.4rem 0.9rem',
+            borderRadius: '30px',
+            border: '1px solid #334155',
+            marginLeft: '0.5rem'
+          }}>
+            <span style={{ fontWeight: '700', fontSize: '0.85rem', color: '#00FF87' }}>
+              👤 {currentUser.name} <span style={{ color: '#94A3B8', fontWeight: '400' }}>({currentUser.role === 'gimnasio' ? 'Gimnasio' : 'Atleta'})</span>
             </span>
             <button 
-              onClick={() => setCurrentUser(null)}
-              style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' }}>
+              onClick={handleLogout}
+              style={{
+                backgroundColor: '#EF4444',
+                color: '#FFFFFF',
+                border: 'none',
+                padding: '0.45rem 1rem',
+                borderRadius: '20px',
+                fontWeight: '700',
+                fontSize: '0.8rem',
+                cursor: 'pointer'
+              }}>
               Cerrar Sesión
             </button>
           </div>
         </div>
       </nav>
 
-      {/* Hero Banner con Carrusel de 5 Segundos */}
-      <header style={{ width: '100%', padding: '4rem 2rem 2.5rem 2rem', textAlign: 'center' }}>
-        <div style={{ minHeight: '140px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-          <h2 style={{ fontSize: '2.3rem', marginBottom: '0.8rem', color: '#f8fafc', fontWeight: '700', maxWidth: '850px' }}>
-            {slides[currentSlide].title}
-          </h2>
-          <p style={{ color: '#cbd5e1', fontSize: '1.1rem', maxWidth: '750px', margin: '0 auto', lineHeight: '1.5' }}>
-            {slides[currentSlide].subtitle}
+      {/* SECCIÓN HERO PRINCIPAL DE BIOMETRA */}
+      <section style={{ 
+        padding: '7rem 4rem 5rem 4rem', 
+        maxWidth: '1200px',
+        background: 'radial-gradient(circle at top left, rgba(0,255,135,0.08) 0%, rgba(15,23,42,1) 60%)'
+      }}>
+        <div style={{
+          display: 'inline-block',
+          backgroundColor: 'rgba(0,255,135,0.1)',
+          color: '#00FF87',
+          padding: '0.4rem 1rem',
+          borderRadius: '20px',
+          fontSize: '0.85rem',
+          fontWeight: '700',
+          marginBottom: '1.5rem',
+          border: '1px solid rgba(0,255,135,0.3)'
+        }}>
+          ⚡ TECNOLOGÍA DE ALTO RENDIMIENTO
+        </div>
+
+        <h1 style={{ 
+          fontSize: '4.5rem', 
+          fontWeight: '900', 
+          margin: '0 0 1.2rem 0', 
+          letterSpacing: '-1.5px',
+          lineHeight: '1.1',
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #94A3B8 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent'
+        }}>
+          Biometra
+        </h1>
+
+        <p style={{ 
+          fontSize: '1.3rem', 
+          color: '#94A3B8', 
+          marginBottom: '2.5rem', 
+          maxWidth: '650px', 
+          lineHeight: '1.6',
+          fontWeight: '400'
+        }}>
+          La plataforma definitiva de análisis biomecánico en tiempo real. Optimiza tu técnica en el gimnasio, previene lesiones y eleva tu entrenamiento al siguiente nivel.
+        </p>
+
+        <div style={{ display: 'flex', gap: '1.2rem' }}>
+          <button 
+            onClick={() => setCurrentView('gps')}
+            style={{
+              backgroundColor: '#00FF87',
+              color: '#0F172A',
+              border: 'none',
+              padding: '1rem 2.2rem',
+              borderRadius: '10px',
+              fontWeight: '800',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              boxShadow: '0 4px 20px rgba(0, 255, 135, 0.4)'
+            }}>
+            Comenzar Entrenamiento
+          </button>
+          <button 
+            onClick={() => setCurrentView('ejercicios')}
+            style={{
+              backgroundColor: 'transparent',
+              color: '#F8FAFC',
+              border: '1px solid #334155',
+              padding: '1rem 2.2rem',
+              borderRadius: '10px',
+              fontWeight: '700',
+              fontSize: '1rem',
+              cursor: 'pointer'
+            }}>
+            Explorar Ejercicios
+          </button>
+        </div>
+      </section>
+
+      {/* SECCIÓN ANÁLISIS DE MOVIMIENTO */}
+      <section id="metricas" style={{ padding: '2rem 4rem 5rem 4rem' }}>
+        <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '2.5rem', color: '#FFFFFF' }}>
+          Análisis Biomecánico de Movimiento
+        </h2>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '2rem'
+        }}>
+          {/* TARJETA 1 */}
+          <div style={{ 
+            backgroundColor: '#1E293B', 
+            padding: '1.5rem', 
+            borderRadius: '16px',
+            border: '1px solid #334155',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{ borderRadius: '10px', overflow: 'hidden', height: '200px', marginBottom: '1.2rem' }}>
+              <img 
+                src="https://images.unsplash.com/photo-1517838277536-f5f99be501cd?q=80&w=600&auto=format&fit=crop" 
+                alt="Tracking 3D Biometra"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+              />
+            </div>
+            <h3 style={{ fontSize: '1.3rem', margin: '0 0 0.5rem 0', fontWeight: '800', color: '#00FF87' }}>
+              Rastreo Articular 3D
+            </h3>
+            <p style={{ color: '#94A3B8', margin: 0, fontSize: '0.95rem', lineHeight: '1.5' }}>
+              Detección de puntos cinemáticos en hombros, cadera, rodillas y tobillos para perfeccionar tu postura en cada repetición.
+            </p>
+          </div>
+
+          {/* TARJETA 2 */}
+          <div style={{ 
+            backgroundColor: '#1E293B', 
+            padding: '1.5rem', 
+            borderRadius: '16px',
+            border: '1px solid #334155',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{ borderRadius: '10px', overflow: 'hidden', height: '200px', marginBottom: '1.2rem' }}>
+              <img 
+                src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=600&auto=format&fit=crop" 
+                alt="Medición de Ángulos" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+            <h3 style={{ fontSize: '1.3rem', margin: '0 0 0.5rem 0', fontWeight: '800', color: '#38BDF8' }}>
+              Cálculo de Ángulos y ROM
+            </h3>
+            <p style={{ color: '#94A3B8', margin: 0, fontSize: '0.95rem', lineHeight: '1.5' }}>
+              Medición automática del rango de movimiento profundo en sentadillas, press de banca y peso muerto.
+            </p>
+          </div>
+
+          {/* TARJETA 3 */}
+          <div style={{ 
+            backgroundColor: '#1E293B', 
+            padding: '1.5rem', 
+            borderRadius: '16px',
+            border: '1px solid #334155',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{ borderRadius: '10px', overflow: 'hidden', height: '200px', marginBottom: '1.2rem' }}>
+              <img 
+                src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=600&auto=format&fit=crop" 
+                alt="Prevención de Lesiones" 
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            </div>
+            <h3 style={{ fontSize: '1.3rem', margin: '0 0 0.5rem 0', fontWeight: '800', color: '#F43F5E' }}>
+              Prevención de Lesiones
+            </h3>
+            <p style={{ color: '#94A3B8', margin: 0, fontSize: '0.95rem', lineHeight: '1.5' }}>
+              Alertas biomecánicas instantáneas si la espalda se curva o las rodillas colapsan hacia adentro.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* SECCIÓN UBICACIÓN CON PRECISIÓN */}
+      <section style={{ padding: '2rem 4rem 6rem 4rem', backgroundColor: '#090D16' }}>
+        <h2 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '3rem', color: '#FFFFFF' }}>
+          Gimnasios y Centros Oficiales
+        </h2>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '4rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.25rem', margin: '0 0 0.5rem 0', fontWeight: '800', color: '#00FF87' }}>
+                Red de Gimnasios Adheridos
+              </h3>
+              <p style={{ color: '#94A3B8', margin: 0, fontSize: '1rem', lineHeight: '1.6' }}>
+                Encuentra las instalaciones deportivas y centros de alto rendimiento equipados con cámaras Biometra.
+              </p>
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: '1.25rem', margin: '0 0 0.5rem 0', fontWeight: '800', color: '#38BDF8' }}>
+                Sincronización Multidispositivo
+              </h3>
+              <p style={{ color: '#94A3B8', margin: 0, fontSize: '1rem', lineHeight: '1.6' }}>
+                Revisa tus métricas, gráficos de rendimiento y videos desde tu teléfono o computadora.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <button 
+                onClick={() => setCurrentView('gps')}
+                style={{
+                  backgroundColor: '#38BDF8',
+                  color: '#0F172A',
+                  border: 'none',
+                  padding: '0.9rem 1.8rem',
+                  borderRadius: '8px',
+                  fontWeight: '800',
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(56, 189, 248, 0.3)',
+                  transition: 'transform 0.2s ease'
+                }}>
+                Ver Mapa de Centros
+              </button>
+            </div>
+          </div>
+
+          <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid #334155', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+            <iframe
+              title="Ubicaciones Biometra"
+              src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d13313.342123512992!2d-70.58!3d-33.45!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1ses!2scl!4v1600000000000!5m2!1ses!2scl"
+              width="100%"
+              height="380"
+              style={{ border: 0 }}
+              allowFullScreen=""
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* PIE DE PÁGINA */}
+      <footer style={{
+        backgroundColor: '#1E293B',
+        padding: '3rem 4rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        borderTop: '1px solid #334155'
+      }}>
+        <div>
+          <h3 style={{ margin: '0 0 0.8rem 0', fontSize: '1.3rem', fontWeight: '900', color: '#FFFFFF' }}>
+            🏋️‍♂️ Biometra
+          </h3>
+          <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#94A3B8' }}>
+            Tecnología y ciencia aplicada al entrenamiento físico.
           </p>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '1.2rem', marginBottom: '1.5rem' }}>
-          {slides.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentSlide(index)}
-              style={{
-                width: currentSlide === index ? '24px' : '10px',
-                height: '10px',
-                borderRadius: '5px',
-                backgroundColor: currentSlide === index ? '#38bdf8' : 'rgba(255, 255, 255, 0.3)',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-            />
-          ))}
-        </div>
-
-        <div>
-          <input 
-            type="text" 
-            placeholder={`Buscar por nombre, ubicación o músculo en ${activeTab === 'gyms' ? 'gimnasios' : 'ejercicios'}...`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '90%', maxWidth: '650px', padding: '1rem 1.4rem', borderRadius: '10px', border: '1px solid #38bdf8', backgroundColor: 'rgba(30, 41, 59, 0.85)', color: '#fff', fontSize: '1rem', outline: 'none', backdropFilter: 'blur(4px)', boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)' }}
-          />
-        </div>
-      </header>
-
-      {/* Contenido Principal */}
-      <main style={{ flex: 1, width: '100%', padding: '2rem 3rem', boxSizing: 'border-box' }}>
-        {activeTab === 'gyms' ? (
-          <section>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ color: '#38bdf8', fontSize: '1.6rem', margin: 0, fontWeight: '700' }}>Catálogo de Gimnasios</h3>
-              <span style={{ color: '#94a3b8', fontSize: '0.95rem' }}>{filteredGyms.length} gimnasios disponibles</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.8rem', width: '100%' }}>
-              {filteredGyms.map(gym => (
-                <div key={gym.id} style={{ backgroundColor: 'rgba(30, 41, 59, 0.85)', backdropFilter: 'blur(6px)', padding: '1.8rem', borderRadius: '12px', border: '1px solid rgba(51, 65, 85, 0.8)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
-                  <div>
-                    <h4 style={{ margin: '0 0 0.8rem 0', color: '#38bdf8', fontSize: '1.3rem' }}>{gym.name}</h4>
-                    <p style={{ margin: '0.4rem 0', color: '#cbd5e1', fontSize: '0.95rem' }}><strong>Ubicación:</strong> {gym.location}</p>
-                    <p style={{ margin: '0.4rem 0', color: '#cbd5e1', fontSize: '0.95rem' }}><strong>Horarios:</strong> {gym.schedule}</p>
-                    <p style={{ margin: '0.4rem 0', color: '#cbd5e1', fontSize: '0.95rem' }}><strong>Servicios:</strong> {gym.services}</p>
-                  </div>
-                  <button onClick={() => setSelectedItem(gym)} style={{ marginTop: '1.2rem', backgroundColor: '#0284c7', color: '#fff', border: 'none', padding: '0.75rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                    Ver Detalle Completo
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : (
-          <section>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ color: '#38bdf8', fontSize: '1.6rem', margin: 0, fontWeight: '700' }}>Catálogo de Ejercicios Técnicos</h3>
-              <span style={{ color: '#94a3b8', fontSize: '0.95rem' }}>{filteredExercises.length} ejercicios registrados</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.8rem', width: '100%' }}>
-              {filteredExercises.map(ex => (
-                <div key={ex.id} style={{ backgroundColor: 'rgba(30, 41, 59, 0.85)', backdropFilter: 'blur(6px)', padding: '1.8rem', borderRadius: '12px', border: '1px solid rgba(51, 65, 85, 0.8)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', boxShadow: '0 4px 6px rgba(0,0,0,0.3)' }}>
-                  <div>
-                    <h4 style={{ margin: '0 0 0.8rem 0', color: '#38bdf8', fontSize: '1.3rem' }}>{ex.name}</h4>
-                    <p style={{ margin: '0.4rem 0', color: '#cbd5e1', fontSize: '0.95rem' }}><strong>Músculo:</strong> {ex.muscle}</p>
-                    <p style={{ margin: '0.4rem 0', color: '#cbd5e1', fontSize: '0.95rem' }}><strong>Dificultad:</strong> {ex.difficulty}</p>
-                    <p style={{ margin: '0.4rem 0', color: '#cbd5e1', fontSize: '0.95rem' }}><strong>Categoría:</strong> {ex.type}</p>
-                  </div>
-                  <button onClick={() => setSelectedItem(ex)} style={{ marginTop: '1.2rem', backgroundColor: '#0284c7', color: '#fff', border: 'none', padding: '0.75rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-                    Ver Instrucciones Técnicas
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-      </main>
-
-      {/* Modal para Detalles */}
-      {selectedItem && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
-          <div style={{ backgroundColor: '#1e293b', width: '90%', maxWidth: '550px', padding: '2rem', borderRadius: '12px', border: '1px solid #38bdf8', color: '#fff', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
-            <h3 style={{ color: '#38bdf8', fontSize: '1.5rem', marginTop: 0 }}>{selectedItem.name}</h3>
-            {selectedItem.instructions ? (
-              <div>
-                <p style={{ margin: '0.5rem 0' }}><strong>Grupo Muscular:</strong> {selectedItem.muscle}</p>
-                <p style={{ margin: '0.5rem 0' }}><strong>Dificultad:</strong> {selectedItem.difficulty}</p>
-                <h4 style={{ color: '#f8fafc', marginTop: '1.2rem', marginBottom: '0.5rem' }}>Guía de Ejecución:</h4>
-                <p style={{ whiteSpace: 'pre-line', color: '#cbd5e1', lineHeight: '1.5' }}>{selectedItem.instructions}</p>
-              </div>
-            ) : (
-              <div>
-                <p style={{ margin: '0.5rem 0' }}><strong>Ubicación:</strong> {selectedItem.location}</p>
-                <p style={{ margin: '0.5rem 0' }}><strong>Horarios:</strong> {selectedItem.schedule}</p>
-                <p style={{ margin: '0.5rem 0' }}><strong>Contacto:</strong> {selectedItem.contact}</p>
-                <p style={{ marginTop: '1rem', color: '#cbd5e1', lineHeight: '1.4' }}>{selectedItem.description}</p>
-              </div>
-            )}
-            <button onClick={() => setSelectedItem(null)} style={{ marginTop: '1.5rem', width: '100%', backgroundColor: '#ef4444', color: '#fff', border: 'none', padding: '0.8rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
-              Cerrar
-            </button>
+        <div style={{ display: 'flex', gap: '4rem' }}>
+          <div>
+            <h4 style={{ margin: '0 0 0.8rem 0', fontSize: '0.95rem', fontWeight: '800', color: '#00FF87' }}>Plataforma</h4>
+            <p style={{ margin: '0.4rem 0', fontSize: '0.85rem', color: '#94A3B8' }}>Análisis Biomecánico</p>
+            <p style={{ margin: '0.4rem 0', fontSize: '0.85rem', color: '#94A3B8' }}>Métricas en Vivo</p>
+          </div>
+          <div>
+            <h4 style={{ margin: '0 0 0.8rem 0', fontSize: '0.95rem', fontWeight: '800', color: '#38BDF8' }}>Soporte</h4>
+            <p style={{ margin: '0.4rem 0', fontSize: '0.85rem', color: '#94A3B8' }}>Contacto</p>
+            <p style={{ margin: '0.4rem 0', fontSize: '0.85rem', color: '#94A3B8' }}>Privacidad</p>
           </div>
         </div>
-      )}
-
-      {/* Pie de Página */}
-      <footer style={{ width: '100%', textAlign: 'center', padding: '1.8rem', backgroundColor: 'rgba(30, 41, 59, 0.9)', borderTop: '1px solid rgba(51, 65, 85, 0.6)', color: '#94a3b8', fontSize: '0.9rem' }}>
-        Biometra © - Plataforma para Análisis Biomecánico y Entrenamiento Deportivo
       </footer>
     </div>
   );
