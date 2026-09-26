@@ -1,3 +1,22 @@
+#Python
+__pycache__/
+*.py[cod]
+
+# Resultados de los datos 
+output/
+
+# Variables de entorno
+.env
+.env.*
+
+# Formatos de Videos
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+
 # Logs
 logs
 *.log
