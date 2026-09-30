@@ -1,0 +1,2 @@
+USE opengym;
+SELECT * FROM EJERCICIO;
