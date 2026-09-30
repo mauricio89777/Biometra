@@ -2,17 +2,35 @@ import React, { useState } from 'react';
 
 export default function Login({ onLoginSuccess }) {
   const [mode, setMode] = useState('login'); 
-  const [role, setRole] = useState('atleta');
+  const [role, setRole] = useState('cliente');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  // Base de usuarios iniciales con lista de clientes asociada a los entrenadores
   const [registeredUsers, setRegisteredUsers] = useState([
-    { name: 'Usuario Demo', email: 'atleta@ejemplo.com', password: '123', role: 'atleta' }
+    { 
+      name: 'Carlos Pérez', 
+      email: 'cliente@ejemplo.com', 
+      password: '123', 
+      role: 'cliente' 
+    },
+    { 
+      name: 'Entrenador Marco', 
+      email: 'entrenador@ejemplo.com', 
+      password: '123', 
+      role: 'entrenador',
+      clientesAsignados: [
+        { id: 1, nombre: 'Ana Gómez', plan: 'Hipertrofia', nivel: 'Intermedio', ultimaSesion: 'Ayer', progreso: '85%' },
+        { id: 2, nombre: 'Carlos Pérez', plan: 'Fuerza Máxima', nivel: 'Avanzado', ultimaSesion: 'Hoy', progreso: '92%' },
+        { id: 3, nombre: 'Lucía Fernández', plan: 'Rehabilitación', nivel: 'Principiante', ultimaSesion: 'Hace 3 días', progreso: '60%' }
+      ]
+    }
   ]);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
 
   const handleTabChange = (newMode) => {
     setMode(newMode);
@@ -37,10 +55,11 @@ export default function Login({ onLoginSuccess }) {
       }
 
       const newUser = { 
-        name: name.trim() || (role === 'atleta' ? 'Atleta Biometra' : 'Gimnasio Biometra'), 
+        name: name.trim() || (role === 'cliente' ? 'Cliente Biometra' : 'Entrenador Biometra'), 
         email: email.trim().toLowerCase(), 
         password, 
-        role 
+        role,
+        ...(role === 'entrenador' ? { clientesAsignados: [] } : {})
       };
 
       setRegisteredUsers([...registeredUsers, newUser]);
@@ -66,14 +85,80 @@ export default function Login({ onLoginSuccess }) {
         return;
       }
 
-      onLoginSuccess({
-        email: userFoundByEmail.email,
-        role: userFoundByEmail.role,
-        name: userFoundByEmail.name
-      });
+      setCurrentUser(userFoundByEmail);
+
+      if (onLoginSuccess) {
+        onLoginSuccess({
+          email: userFoundByEmail.email,
+          role: userFoundByEmail.role,
+          name: userFoundByEmail.name
+        });
+      }
     }
   };
 
+  // VISTA PANEL DEL ENTRENADOR
+  if (currentUser && currentUser.role === 'entrenador') {
+    return (
+      <div style={{
+        width: '100vw',
+        minHeight: '100vh',
+        backgroundColor: '#0f172a',
+        color: '#fff',
+        fontFamily: 'system-ui, sans-serif',
+        padding: '2rem'
+      }}>
+        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #334155', paddingBottom: '1rem' }}>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#38bdf8' }}>🏋️‍♂️ Panel de Entrenador</h1>
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.9rem' }}>Bienvenido/a, {currentUser.name}</p>
+            </div>
+            <button 
+              onClick={() => setCurrentUser(null)}
+              style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none', padding: '0.6rem 1.2rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
+              Cerrar Sesión
+            </button>
+          </header>
+
+          <h2 style={{ fontSize: '1.3rem', marginBottom: '1rem', color: '#f8fafc' }}>📋 Clientes Registrados y Estado de Entrenamiento</h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+            {currentUser.clientesAsignados && currentUser.clientesAsignados.length > 0 ? (
+              currentUser.clientesAsignados.map((cliente) => (
+                <div key={cliente.id} style={{
+                  backgroundColor: '#1e293b',
+                  borderRadius: '12px',
+                  padding: '1.5rem',
+                  border: '1px solid #38bdf8',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff' }}>👤 {cliente.nombre}</h3>
+                    <span style={{ backgroundColor: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', padding: '0.2rem 0.6rem', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                      {cliente.nivel}
+                    </span>
+                  </div>
+
+                  <p style={{ margin: '0.4rem 0', color: '#cbd5e1', fontSize: '0.85rem' }}>🎯 <strong>Plan:</strong> {cliente.plan}</p>
+                  <p style={{ margin: '0.4rem 0', color: '#cbd5e1', fontSize: '0.85rem' }}>🕒 <strong>Última Sesión:</strong> {cliente.ultimaSesion}</p>
+                  <p style={{ margin: '0.4rem 0', color: '#cbd5e1', fontSize: '0.85rem' }}>📈 <strong>Cumplimiento:</strong> {cliente.progreso}</p>
+
+                  <button style={{ width: '100%', marginTop: '1rem', backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', padding: '0.5rem', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+                    Ver Detalles y Asignar Rutina
+                  </button>
+                </div>
+              ))
+            ) : (
+              <p style={{ color: '#94a3b8' }}>Aún no tienes clientes asignados a tu cuenta.</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // VISTA FORMULARIO LOGIN / REGISTRO
   return (
     <div style={{
       width: '100vw',
@@ -148,15 +233,15 @@ export default function Login({ onLoginSuccess }) {
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button 
                     type="button"
-                    onClick={() => setRole('atleta')}
-                    style={{ flex: 1, padding: '0.5rem', border: '1px solid #334155', borderRadius: '6px', backgroundColor: role === 'atleta' ? 'rgba(56, 189, 248, 0.2)' : '#0f172a', color: role === 'atleta' ? '#38bdf8' : '#cbd5e1', cursor: 'pointer' }}>
-                    🏋️‍♂️ Atleta
+                    onClick={() => setRole('cliente')}
+                    style={{ flex: 1, padding: '0.5rem', border: '1px solid #334155', borderRadius: '6px', backgroundColor: role === 'cliente' ? 'rgba(56, 189, 248, 0.2)' : '#0f172a', color: role === 'cliente' ? '#38bdf8' : '#cbd5e1', cursor: 'pointer', fontWeight: 'bold' }}>
+                    👤 Cliente
                   </button>
                   <button 
                     type="button"
-                    onClick={() => setRole('gimnasio')}
-                    style={{ flex: 1, padding: '0.5rem', border: '1px solid #334155', borderRadius: '6px', backgroundColor: role === 'gimnasio' ? 'rgba(56, 189, 248, 0.2)' : '#0f172a', color: role === 'gimnasio' ? '#38bdf8' : '#cbd5e1', cursor: 'pointer' }}>
-                    🏢 Gimnasio
+                    onClick={() => setRole('entrenador')}
+                    style={{ flex: 1, padding: '0.5rem', border: '1px solid #334155', borderRadius: '6px', backgroundColor: role === 'entrenador' ? 'rgba(56, 189, 248, 0.2)' : '#0f172a', color: role === 'entrenador' ? '#38bdf8' : '#cbd5e1', cursor: 'pointer', fontWeight: 'bold' }}>
+                    📋 Entrenador
                   </button>
                 </div>
               </div>
@@ -168,7 +253,7 @@ export default function Login({ onLoginSuccess }) {
             <input 
               type="email" 
               required
-              placeholder="atleta@ejemplo.com"
+              placeholder="cliente@ejemplo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#fff', boxSizing: 'border-box' }}
@@ -195,9 +280,10 @@ export default function Login({ onLoginSuccess }) {
         </form>
 
         {mode === 'login' && (
-          <p style={{ textAlign: 'center', color: '#64748b', fontSize: '0.78rem', marginTop: '1.2rem', marginBottom: 0 }}>
-            💡 Demo: <strong>atleta@ejemplo.com</strong> / clave: <strong>123</strong>
-          </p>
+          <div style={{ textAlign: 'center', color: '#64748b', fontSize: '0.78rem', marginTop: '1.2rem' }}>
+            <p style={{ margin: '0.2rem 0' }}>💡 Demo Cliente: <strong>cliente@ejemplo.com</strong> / <strong>123</strong></p>
+            <p style={{ margin: '0.2rem 0' }}>💡 Demo Entrenador: <strong>entrenador@ejemplo.com</strong> / <strong>123</strong></p>
+          </div>
         )}
       </div>
     </div>

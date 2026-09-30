@@ -11,46 +11,39 @@ const BiometraLogoIcon = () => (
 );
 
 export default function Ejercicios({ onNavigate }) {
-  // Base de datos de 25 Ejercicios con Videos Demostrativos Reales
+  // Base de datos de ejercicios con tus nuevos enlaces de YouTube
   const bancoEjercicios = [
     // PECHO
-    { id: 1, nombre: 'Press de Banca Plano con Barra', musculo: 'Pecho', grupo: 'Pecho / Tríceps', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=600', tips: ['Escápulas retráctiles', 'Barra al esternón', 'Pies firmes en el suelo'] },
-    { id: 2, nombre: 'Press Inclinado con Mancuernas', musculo: 'Pecho', grupo: 'Pecho Superior', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&q=80&w=600', tips: ['Inclinación 30°', 'Codos a 45° del torso', 'Extensión completa sin bloquear'] },
-    { id: 3, nombre: 'Aperturas en Polea Alta (Crossover)', musculo: 'Pecho', grupo: 'Pecho Aislado', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=600', tips: ['Ligera flexión de codos', 'Juntar manos al centro', 'Control en el retorno'] },
-    { id: 4, nombre: 'Fondos en Paralelas para Pecho', musculo: 'Pecho', grupo: 'Pecho / Tríceps', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=600', tips: ['Torso inclinado hacia adelante', 'Bajar hasta 90° de codo', 'Mirada al frente'] },
+    { id: 1, nombre: 'Press de Banca Plano con Barra', musculo: 'Pecho', grupo: 'Pecho / Tríceps', videoUrl: 'https://www.youtube.com/watch?v=vcBig73ojpE', tips: ['Escápulas retráctiles', 'Barra al esternón', 'Pies firmes en el suelo'] },
+    { id: 2, nombre: 'Press Inclinado con Mancuernas', musculo: 'Pecho', grupo: 'Pecho Superior', videoUrl: 'https://www.youtube.com/watch?v=8iPEnn-ltC8', tips: ['Inclinación 30°', 'Codos a 45° del torso', 'Extensión completa sin bloquear'] },
+    { id: 3, nombre: 'Aperturas en Polea Alta (Crossover)', musculo: 'Pecho', grupo: 'Pecho Aislado', videoUrl: 'https://www.youtube.com/watch?v=taI4XduLpTk', tips: ['Ligera flexión de codos', 'Juntar manos al centro', 'Control en el retorno'] },
+    { id: 4, nombre: 'Fondos en Paralelas para Pecho', musculo: 'Pecho', grupo: 'Pecho / Tríceps', videoUrl: 'https://www.youtube.com/watch?v=2z8JmcrW-As', tips: ['Torso inclinado hacia adelante', 'Bajar hasta 90° de codo', 'Mirada al frente'] },
     
     // ESPALDA
-    { id: 5, nombre: 'Dominadas Pronadas (Pull-ups)', musculo: 'Espalda', grupo: 'Dorsal Ancho', videoUrl: 'https://v.ftcdn.net/03/60/01/59/700_F_360015949_EwWbA2S9wM33aZz3qQjJz98x1Yq1Zz5k_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&q=80&w=600', tips: ['Agarre más ancho que hombros', 'Llevar pecho a la barra', 'Bajada controlada'] },
-    { id: 6, nombre: 'Remo con Barra Giro', musculo: 'Espalda', grupo: 'Espalda Media', videoUrl: 'https://v.ftcdn.net/03/60/01/59/700_F_360015949_EwWbA2S9wM33aZz3qQjJz98x1Yq1Zz5k_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&q=80&w=600', tips: ['Espalda recta 45°', 'Traccionar hacia la cadera', 'Codos pegados'] },
-    { id: 7, nombre: 'Jalón al Pecho en Polea', musculo: 'Espalda', grupo: 'Dorsal Ancho', videoUrl: 'https://v.ftcdn.net/03/60/01/59/700_F_360015949_EwWbA2S9wM33aZz3qQjJz98x1Yq1Zz5k_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=600', tips: ['Llevar la barra sobre la clavícula', 'Sin balanceo lumbar', 'Pausa en contracción'] },
-    { id: 8, nombre: 'Remo Unilateral con Mancuerna', musculo: 'Espalda', grupo: 'Dorsal / Romboldes', videoUrl: 'https://v.ftcdn.net/03/60/01/59/700_F_360015949_EwWbA2S9wM33aZz3qQjJz98x1Yq1Zz5k_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&q=80&w=600', tips: ['Apoyo estable en banco', 'Llevar mancuerna a la cresta ilíaca', 'Sin rotar tronco'] },
+    { id: 5, nombre: 'Dominadas Pronadas (Pull-ups)', musculo: 'Espalda', grupo: 'Dorsal Ancho', videoUrl: 'https://www.youtube.com/watch?v=eGo4IYlbE5g', tips: ['Agarre más ancho que hombros', 'Llevar pecho a la barra', 'Bajada controlada'] },
+    { id: 6, nombre: 'Remo con Barra Giro', musculo: 'Espalda', grupo: 'Espalda Media', videoUrl: 'https://www.youtube.com/watch?v=FWJR5Ve8bnQ', tips: ['Espalda recta 45°', 'Traccionar hacia la cadera', 'Codos pegados'] },
+    { id: 7, nombre: 'Jalón al Pecho en Polea', musculo: 'Espalda', grupo: 'Dorsal Ancho', videoUrl: 'https://www.youtube.com/watch?v=CAwf7n6Luuc', tips: ['Llevar la barra sobre la clavícula', 'Sin balanceo lumbar', 'Pausa en contracción'] },
+    { id: 8, nombre: 'Remo Unilateral con Mancuerna', musculo: 'Espalda', grupo: 'Dorsal / Romboides', videoUrl: 'https://www.youtube.com/watch?v=pYcpY20QaE8', tips: ['Apoyo estable en banco', 'Llevar mancuerna a la cresta ilíaca', 'Sin rotar tronco'] },
 
     // PIERNAS / CUÁDRICEPS / ISQUIOTIBIALES
-    { id: 9, nombre: 'Sentadilla Libre con Barra trasera', musculo: 'Cuadriceps', grupo: 'Pierna Completa', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&q=80&w=600', tips: ['Profundidad bajo 90°', 'Rodillas alineadas con punta de pies', 'Torso erguido'] },
-    { id: 10, nombre: 'Sentadilla Búlgara con Mancuernas', musculo: 'Cuadriceps', grupo: 'Pierna Unilateral', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=600', tips: ['Pie trasero apoyado firmemente', 'Descenso vertical puro', 'Carga en talón delantero'] },
-    { id: 11, nombre: 'Prensa de Piernas 45°', musculo: 'Cuadriceps', grupo: 'Cuádriceps / Glúteos', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&q=80&w=600', tips: ['Espalda pegada al respaldo', 'Sin bloquear rodillas al extender', 'Descenso profundo'] },
-    { id: 12, nombre: 'Peso Muerto Rumano', musculo: 'Isquiotibiales', grupo: 'Cadena Posterior', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&q=80&w=600', tips: ['Bisagra de cadera hacia atrás', 'Rodillas semiflexionadas', 'Barra rozando piernas'] },
-    { id: 13, nombre: 'Curl de Piernas Tumbado', musculo: 'Isquiotibiales', grupo: 'Isquios Aislados', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=600', tips: ['Cadera pegada a la almohadilla', 'Contracción de 1 seg arriba', 'Fase negativa lenta'] },
+    { id: 9, nombre: 'Sentadilla Libre con Barra Trasera', musculo: 'Cuadriceps', grupo: 'Pierna Completa', videoUrl: 'https://www.youtube.com/watch?v=ultWZbUMPL8', tips: ['Profundidad bajo 90°', 'Rodillas alineadas con punta de pies', 'Torso erguido'] },
+    { id: 10, nombre: 'Sentadilla Búlgara con Mancuernas', musculo: 'Cuadriceps', grupo: 'Pierna Unilateral', videoUrl: 'https://www.youtube.com/watch?v=2C-uNgKwPLE', tips: ['Pie trasero apoyado firmemente', 'Descenso vertical puro', 'Carga en talón delantero'] },
+    { id: 11, nombre: 'Prensa de Piernas 45°', musculo: 'Cuadriceps', grupo: 'Cuádriceps / Glúteos', videoUrl: 'https://www.youtube.com/watch?v=IZxyjW7MPJQ', tips: ['Espalda pegada al respaldo', 'Sin bloquear rodillas al extender', 'Descenso profundo'] },
+    { id: 12, nombre: 'Peso Muerto Rumano', musculo: 'Isquiotibiales', grupo: 'Cadena Posterior', videoUrl: 'https://www.youtube.com/watch?v=JCXUYuzwNrM', tips: ['Bisagra de cadera hacia atrás', 'Rodillas semiflexionadas', 'Barra rozando piernas'] },
+    { id: 13, nombre: 'Curl de Piernas Tumbado', musculo: 'Isquiotibiales', grupo: 'Isquios Aislados', videoUrl: 'https://www.youtube.com/watch?v=1Tq3QdYUuHs', tips: ['Cadera pegada a la almohadilla', 'Contracción de 1 seg arriba', 'Fase negativa lenta'] },
 
     // GLÚTEOS
-    { id: 14, nombre: 'Hip Thrust con Barra en Banco', musculo: 'Glutios', grupo: 'Glúteo Mayor', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&q=80&w=600', tips: ['Barbilla pegada al pecho', 'Bloqueo arriba con retroversión', 'Espinillas a 90°'] },
-    { id: 15, nombre: 'Patada de Glúteo en Polea Low', musculo: 'Glutios', grupo: 'Glúteo Aislado', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&q=80&w=600', tips: ['Extensión diagonal', 'Core apretado', 'Sin hiperarchivar lumbar'] },
+    { id: 14, nombre: 'Hip Thrust con Barra en Banco', musculo: 'Glutios', grupo: 'Glúteo Mayor', videoUrl: 'https://www.youtube.com/watch?v=SEdqd1n0cvg', tips: ['Barbilla pegada al pecho', 'Bloqueo arriba con retroversión', 'Espinillas a 90°'] },
+    { id: 15, nombre: 'Patada de Glúteo en Polea Low', musculo: 'Glutios', grupo: 'Glúteo Aislado', videoUrl: 'https://www.youtube.com/watch?v=G30E30S41J8', tips: ['Extensión diagonal', 'Core apretado', 'Sin hiperarchivar lumbar'] },
 
     // HOMBROS
-    { id: 16, nombre: 'Press Militar con Barra de Pie', musculo: 'Hombros', grupo: 'Deltoides Anterior', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=600', tips: ['Glúteos y abdomen apretados', 'Barra pasa cerca de la cara', 'Bloqueo sobre la cabeza'] },
-    { id: 17, nombre: 'Elevaciones Laterales con Mancuernas', musculo: 'Hombros', grupo: 'Deltoides Lateral', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=600', tips: ['Codos ligeramente flexionados', 'Subir hasta la altura de los hombros', 'Lento al bajar'] },
-    { id: 18, nombre: 'Face Pulls en Polea Alta', musculo: 'Hombros', grupo: 'Deltoides Posterior', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&q=80&w=600', tips: ['Tirar cuerda hacia frente/ojos', 'Rotación externa de hombros', 'Separar las manos al final'] },
+    { id: 16, nombre: 'Press Militar con Barra de Pie', musculo: 'Hombros', grupo: 'Deltoides Anterior', videoUrl: 'https://www.youtube.com/watch?v=2yjwXTZQDDI', tips: ['Glúteos y abdomen apretados', 'Barra pasa cerca de la cara', 'Bloqueo sobre la cabeza'] },
+    { id: 17, nombre: 'Elevaciones Laterales con Mancuernas', musculo: 'Hombros', grupo: 'Deltoides Lateral', videoUrl: 'https://www.youtube.com/watch?v=3VcKaXpzqRo', tips: ['Codos ligeramente flexionados', 'Subir hasta la altura de los hombros', 'Lento al bajar'] },
+    { id: 18, nombre: 'Face Pulls en Polea Alta', musculo: 'Hombros', grupo: 'Deltoides Posterior', videoUrl: 'https://www.youtube.com/watch?v=V8dZ3pyiCBo', tips: ['Tirar cuerda hacia frente/ojos', 'Rotación externa de hombros', 'Separar las manos al final'] },
 
     // BÍCEPS & TRÍCEPS
-    { id: 19, nombre: 'Curl de Bíceps de Pie con Barra Z', musculo: 'Biceps', grupo: 'Bíceps Braquial', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=600', tips: ['Codos inmóviles pegados al cuerpo', 'Sin balancear la espalda', 'Rango de movimiento completo'] },
-    { id: 20, nombre: 'Curl Martillo con Mancuernas', musculo: 'Biceps', grupo: 'Bíceps / Braquiorradial', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=600', tips: ['Agarre neutro (palmas enfrentadas)', 'Apretar arriba 1 seg', 'Control del peso'] },
-    { id: 21, nombre: 'Press Francés con Barra Z', musculo: 'Triceps', grupo: 'Tríceps (Cabeza Larga)', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&q=80&w=600', tips: ['Codos apuntando al techo', 'Llevar barra a la frente/coronilla', 'Sin abrir codos'] },
-    { id: 22, nombre: 'Extensión de Tríceps en Polea Alta', musculo: 'Triceps', grupo: 'Tríceps Aislado', videoUrl: 'https://v.ftcdn.net/05/20/48/80/700_F_520488001_sWpSvhG97wR5I49S0WzQyZf4XGf4K7Qj_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&q=80&w=600', tips: ['Codos fijos a los costados', 'Abrir cuerda al final del recorrido', 'Espalda erguida'] },
-
-    // ABDOMEN & CORE
-    { id: 23, nombre: 'Rueda Abdominal (Ab Wheel Rollout)', musculo: 'Core', grupo: 'Abdomen / Core', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&q=80&w=600', tips: ['Retroversion pélvica fija', 'Apretar abdomen todo el trayecto', 'No hundir zona lumbar'] },
-    { id: 24, nombre: 'Elevaciones de Piernas Colgado', musculo: 'Core', grupo: 'Abdomen Inferior', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&q=80&w=600', tips: ['Elevar cadera, no solo piernas', 'Sin balanceo de cuerpo', 'Bajada lenta'] },
-    { id: 25, nombre: 'Plancha Isométrica con Carga', musculo: 'Core', grupo: 'Core Estabilidad', videoUrl: 'https://v.ftcdn.net/04/90/12/32/700_F_490123281_qN9pS2XfD78kK0J6qS4q8w1J8k4q3q2w_ST.mp4', imgUrl: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&q=80&w=600', tips: ['Cuerpo en línea recta perfecta', 'Apretar glúteos y abdomen', 'Respiración constante'] }
+    { id: 19, nombre: 'Curl de Bíceps de Pie con Barra Z', musculo: 'Biceps', grupo: 'Bíceps Braquial', videoUrl: 'https://www.youtube.com/watch?v=kwG2ipFRgfo', tips: ['Codos inmóviles pegados al cuerpo', 'Sin balancear la espalda', 'Rango de movimiento completo'] },
+    { id: 20, nombre: 'Curl Martillo con Mancuernas', musculo: 'Biceps', grupo: 'Bíceps / Braquiorradial', videoUrl: 'https://www.youtube.com/watch?v=zC3Yb0orLuu', tips: ['Agarre neutro (palmas enfrentadas)', 'Apretar arriba 1 seg', 'Control del peso'] }
   ];
 
   // Estados
@@ -61,7 +54,7 @@ export default function Ejercicios({ onNavigate }) {
   const [analizando, setAnalizando] = useState(false);
   const [resultadoIA, setResultadoIA] = useState(null);
 
-  // Filtrado de ejercicios por músculo seleccionado en el Modelo 3D
+  // Filtrado de ejercicios por músculo
   const ejerciciosFiltrados = filtroMusculo === 'Todos' 
     ? bancoEjercicios 
     : bancoEjercicios.filter(e => e.musculo.toLowerCase() === filtroMusculo.toLowerCase());
@@ -92,13 +85,30 @@ export default function Ejercicios({ onNavigate }) {
           puntosPositivos: ['Buena velocidad de aceleración en la fase concéntrica'],
           correcciones: [
             '⚠️ Valgo de rodilla detectado: Tus rodillas colapsan hacia adentro al subir.',
-            '⚠️ Pérdida de curvatura lumbar neutra en la fase más profunda.',
+            '⚠ Pérdida de curvatura lumbar neutra en la fase más profunda.',
             '💡 Recomendación: Reduce el peso un 15% y enfócate en la estabilidad plantar.'
           ]
         });
       }
     }, 2500);
   };
+
+  // Convierte enlaces de YouTube a versión limpia limpia sin controles ni elementos flotantes
+  const obtenerUrlSinInteraccion = (url) => {
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      let videoId = '';
+      if (url.includes('/shorts/')) {
+        videoId = url.split('/shorts/')[1].split('?')[0];
+      } else {
+        const matchId = url.match(/(?:embed\/|watch\?v=)([^&?]+)/);
+        videoId = matchId ? matchId[1] : '';
+      }
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&disablekb=1&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`;
+    }
+    return url;
+  };
+
+  const esShorts = ejercicioSeleccionado.videoUrl.includes('/shorts/');
 
   return (
     <div style={{
@@ -119,7 +129,7 @@ export default function Ejercicios({ onNavigate }) {
         <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <button 
-              onClick={() => onNavigate && onNavigate('home')}
+              onClick={() => onNavigate && onNavigate('app')}
               style={{
                 backgroundColor: 'transparent',
                 color: '#00FF87',
@@ -155,7 +165,7 @@ export default function Ejercicios({ onNavigate }) {
             🎯 Biomecánica y Análisis de Ejercicios
           </h1>
           <p style={{ color: '#94A3B8', fontSize: '1.1rem', margin: 0 }}>
-            Explora +25 ejercicios y selecciona los músculos en el modelo anatómico.
+            Explora los ejercicios y selecciona los músculos en el modelo anatómico.
           </p>
         </div>
 
@@ -191,7 +201,6 @@ export default function Ejercicios({ onNavigate }) {
                 PINCHA UN MÚSCULO EN EL MODELO:
               </span>
 
-              {/* ILUSTRACIÓN ANATÓMICA SVG */}
               <svg width="180" height="260" viewBox="0 0 100 150" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="50" cy="18" r="10" fill="#334155" />
                 <circle cx="28" cy="38" r="7" fill={filtroMusculo === 'Hombros' ? '#00FF87' : '#475569'} onClick={() => setFiltroMusculo('Hombros')} style={{ cursor: 'pointer' }} />
@@ -274,39 +283,15 @@ export default function Ejercicios({ onNavigate }) {
           </select>
         </div>
 
-        {/* SECCIÓN 3: DETALLE DEL EJERCICIO CON VIDEO REAL DE DEMOSTRACIÓN */}
+        {/* SECCIÓN 3: DETALLE DEL EJERCICIO CON PANTALLA LIMPIA Y RECORTADA */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+          gridTemplateColumns: esShorts ? 'minmax(280px, 380px) 1fr' : 'repeat(auto-fit, minmax(360px, 1fr))',
           gap: '2rem',
+          alignItems: 'start',
           marginBottom: '3rem'
         }}>
-          {/* REPRODUCTOR DE DEMOSTRACIÓN DE EJERCICIO EN VIDEO REAL */}
-          <div style={{
-            backgroundColor: '#111827',
-            borderRadius: '16px',
-            padding: '1.5rem',
-            border: '1px solid #1F2937'
-          }}>
-            <h3 style={{ color: '#FFFFFF', fontSize: '1.2rem', fontWeight: '800', margin: '0 0 1rem 0' }}>
-              🎥 Demostración del Ejercicio
-            </h3>
-            <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid #374151', backgroundColor: '#000' }}>
-              <video 
-                key={ejercicioSeleccionado.id}
-                controls 
-                autoPlay 
-                muted 
-                loop 
-                style={{ width: '100%', height: '240px', objectFit: 'cover' }}
-              >
-                <source src={ejercicioSeleccionado.videoUrl} type="video/mp4" />
-                Tu navegador no soporta el video.
-              </video>
-            </div>
-          </div>
-
-          {/* FOTO E INSTRUCCIONES CLAVE */}
+          {/* REPRODUCTOR DE VÍDEO CON MÁSCARA PARA ELIMINAR ELEMENTOS SOBREPUESTOS */}
           <div style={{
             backgroundColor: '#111827',
             borderRadius: '16px',
@@ -314,7 +299,72 @@ export default function Ejercicios({ onNavigate }) {
             border: '1px solid #1F2937',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between'
+            alignItems: 'center'
+          }}>
+            <h3 style={{ color: '#FFFFFF', fontSize: '1.2rem', fontWeight: '800', margin: '0 0 1rem 0', width: '100%' }}>
+              🎥 Demostración del Ejercicio
+            </h3>
+            
+            <div style={{ 
+              position: 'relative', 
+              borderRadius: '16px', 
+              overflow: 'hidden', 
+              border: '1px solid #374151', 
+              backgroundColor: '#000',
+              width: '100%',
+              maxWidth: esShorts ? '320px' : '100%',
+              aspectRatio: esShorts ? '9/16' : '16/9',
+              height: 'auto'
+            }}>
+              {/* CAPA TRANSPARENTE QUE INHABILITA CUALQUIER CLIC O SOBREPOSICIÓN */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                zIndex: 20,
+                background: 'transparent',
+                cursor: 'default'
+              }} />
+
+              {/* CONTENEDOR MÁSCARA QUE RECORTA LOS MÁRGENES DE LA INTERFAZ DE YOUTUBE */}
+              <div style={{
+                width: '100%',
+                height: '100%',
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                <iframe
+                  key={ejercicioSeleccionado.id}
+                  src={obtenerUrlSinInteraccion(ejercicioSeleccionado.videoUrl)}
+                  title={ejercicioSeleccionado.nombre}
+                  style={{ 
+                    width: '120%', 
+                    height: '120%', 
+                    position: 'absolute',
+                    top: '-10%',
+                    left: '-10%',
+                    border: 'none',
+                    pointerEvents: 'none',
+                    objectFit: 'cover'
+                  }}
+                  allow="autoplay; encrypted-media"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* INSTRUCCIONES CLAVE */}
+          <div style={{
+            backgroundColor: '#111827',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            border: '1px solid #1F2937',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '100%'
           }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
@@ -344,7 +394,7 @@ export default function Ejercicios({ onNavigate }) {
                 setArchivoVideo(null);
               }}
               style={{
-                marginTop: '1.5rem',
+                marginTop: '2rem',
                 backgroundColor: '#00FF87',
                 color: '#090D16',
                 border: 'none',
