@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id             Int        @id @default(autoincrement())
+  nombre         String     @db.VarChar(100)
+  email          String     @unique @db.VarChar(150)
+  password_hash  String     @db.VarChar(255)
+  fecha_registro DateTime   @default(now())
+  peso           Float?
+  altura         Float?
+  genero         String?    @db.VarChar(20)
+  videos         Video[]
+
+  @@map("USUARIO")
+}
+
+model Ejercicio {
+  id             Int      @id @default(autoincrement())
+  nombre         String   @db.VarChar(100)
+  grupo_muscular String?  @db.VarChar(50)
+  tipo           String?  @db.VarChar(50)
+  videos         Video[]
+
+  @@map("EJERCICIO")
+}
+
+model Video {
+  id           Int        @id @default(autoincrement())
+  usuario_id   Int
+  ejercicio_id Int
+  url_archivo  String     @db.VarChar(255)
+  fecha_carga  DateTime   @default(now())
+  estado       String?    @db.VarChar(30)
+  usuario      Usuario    @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+  ejercicio    Ejercicio  @relation(fields: [ejercicio_id], references: [id], onDelete: Cascade)
+  analisis     Analisis[]
+
+  @@map("VIDEO")
+}
+
+model Analisis {
+  id             Int        @id @default(autoincrement())
+  video_id       Int
+  fecha_analisis DateTime   @default(now())
+  puntuacion     Float?
+  estado         String?    @db.VarChar(30)
+  video          Video      @relation(fields: [video_id], references: [id], onDelete: Cascade)
+  metricas       Metrica[]
+  feedbacks      Feedback[]
+
+  @@map("ANALISIS")
+}
+
+model Metrica {
+  id           Int      @id @default(autoincrement())
+  analisis_id  Int
+  tipo_metrica String   @db.VarChar(50)
+  valor        Float?
+  analisis     Analisis @relation(fields: [analisis_id], references: [id], onDelete: Cascade)
+
+  @@map("METRICA")
+}
+
+model Feedback {
+  id             Int      @id @default(autoincrement())
+  analisis_id    Int
+  observacion    String?  @db.VarChar(500)
+  recomendacion  String?  @db.VarChar(500)
+  analisis       Analisis @relation(fields: [analisis_id], references: [id], onDelete: Cascade)
+
+  @@map("FEEDBACK")
+}
+
+model Gimnasio {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @db.VarChar(100)
+  direccion String?  @db.VarChar(200)
+  latitud   Float?
+  longitud  Float?
+  telefono  String?  @db.VarChar(20)
+  horario   String?  @db.VarChar(100)
+
+  @@map("GIMNASIO")
+}
