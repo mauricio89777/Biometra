@@ -59,38 +59,53 @@ export default function Ejercicios({ onNavigate }) {
     ? bancoEjercicios 
     : bancoEjercicios.filter(e => e.musculo.toLowerCase() === filtroMusculo.toLowerCase());
 
-  // Procesamiento de Análisis de Técnica
-  const ejecutarAnalisisIA = () => {
-    if (!archivoVideo) return;
+  // Procesamiento de Análisis de Técnica real
+
+
+  const ejecutarAnalisisIA = async () => {
+    if (!archivoVideo) {
+      return;
+    }
+
     setAnalizando(true);
     setResultadoIA(null);
 
-    setTimeout(() => {
-      setAnalizando(false);
-      const esCorrecta = Math.random() > 0.3;
-      
-      if (esCorrecta) {
-        setResultadoIA({
-          estado: 'CORRECTO',
-          puntuacion: '94 / 100',
-          mensaje: '¡Excelente ejecución biomecánica! Mantienes ángulos seguros y excelente alineación articular.',
-          puntosPositivos: ['Rango de movimiento profundo alcanzado', 'Estabilidad lumbar perfecta durante todo el ejercicio', 'Cadencia y tempo controlado'],
-          correcciones: ['Sugerencia: Mantén la mirada fija en el punto de apoyo para optimizar curvatura cervical.']
-        });
-      } else {
-        setResultadoIA({
-          estado: 'INCORRECTO',
-          puntuacion: '62 / 100',
-          mensaje: 'Se detectaron desviaciones significativas en la postura que incrementan el riesgo de lesión.',
-          puntosPositivos: ['Buena velocidad de aceleración en la fase concéntrica'],
-          correcciones: [
-            '⚠️ Valgo de rodilla detectado: Tus rodillas colapsan hacia adentro al subir.',
-            '⚠ Pérdida de curvatura lumbar neutra en la fase más profunda.',
-            '💡 Recomendación: Reduce el peso un 15% y enfócate en la estabilidad plantar.'
-          ]
-        });
+    try{
+      const formData = new FormData();
+      formData.append('video', archivoVideo);
+
+      const respuesta = await fetch(
+        'http://localhost:3000/videos/analizar',
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
+
+
+      const resultado = await respuesta.json();
+
+      if (!respuesta.ok) {
+        throw new Error(
+          resultado.error || 'Error al analizar el video'
+        );
       }
-    }, 2500);
+      console.log('Resultado recibido desde Express:', resultado);
+
+      setResultadoIA(resultado);
+
+    } catch (error) {
+      console.error('Error en el analisis', error);
+      setResultadoIA({
+        estado: 'ERROR',
+        mensaje: error.message,
+        video: null,
+        video_procesado: null,
+        datos: null
+      });
+    } finally {
+      setAnalizando(false);
+    }
   };
 
   // Convierte enlaces de YouTube a versión limpia limpia sin controles ni elementos flotantes
@@ -519,42 +534,55 @@ export default function Ejercicios({ onNavigate }) {
             )}
 
             {/* DICTAMEN DE VALIDACIÓN DE LA TÉCNICA */}
+          
             {resultadoIA && (
-              <div style={{
-                backgroundColor: '#090D16',
-                padding: '1.5rem',
-                borderRadius: '16px',
-                border: resultadoIA.estado === 'CORRECTO' ? '2px solid #00FF87' : '2px solid #EF4444'
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <span style={{
-                    backgroundColor: resultadoIA.estado === 'CORRECTO' ? 'rgba(0, 255, 135, 0.2)' : 'rgba(239, 68, 68, 0.2)',
-                    color: resultadoIA.estado === 'CORRECTO' ? '#00FF87' : '#EF4444',
-                    padding: '0.4rem 1rem',
-                    borderRadius: '20px',
-                    fontWeight: '900',
-                    fontSize: '0.9rem'
-                  }}>
-                    TÉCNICA {resultadoIA.estado}
-                  </span>
-                  <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#FFFFFF' }}>
-                    Puntuación: {resultadoIA.puntuacion}
-                  </span>
-                </div>
+              <div
+                style={{
+                  backgroundColor: '#090D16',
+                  padding: '1.5rem',
+                  borderRadius: '16px',
+                  border: '2px solid #00FF87'
+                }}
+              >
+                <h4
+                  style={{
+                    color: '#00FF87',
+                    marginTop: 0
+                  }}
+                >
+                  Resultado del análisis
+                </h4>
 
-                <p style={{ color: '#F8FAFC', fontSize: '0.95rem', lineHeight: '1.4', marginBottom: '1.2rem' }}>
-                  {resultadoIA.mensaje}
+                <p>
+                  <strong>Estado:</strong> {resultadoIA.estado}
                 </p>
 
-                <h4 style={{ color: '#38BDF8', fontSize: '0.9rem', margin: '0 0 0.5rem 0' }}>Desglose Biomecánico:</h4>
-                <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.88rem', color: '#CBD5E1', lineHeight: '1.5' }}>
-                  {resultadoIA.puntosPositivos.map((item, idx) => (
-                    <li key={idx} style={{ color: '#00FF87' }}>{item}</li>
-                  ))}
-                  {resultadoIA.correcciones.map((item, idx) => (
-                    <li key={idx} style={{ color: '#F87171', marginTop: '0.3rem' }}>{item}</li>
-                  ))}
-                </ul>
+                {resultadoIA.video && (
+                  <p>
+                    <strong>Video recibido:</strong><br />
+                    {resultadoIA.video}
+                  </p>
+                )}
+
+                {resultadoIA.video_procesado && (
+                  <p>
+                    <strong>Video procesado:</strong><br />
+                    {resultadoIA.video_procesado}
+                  </p>
+                )}
+
+                {resultadoIA.datos && (
+                  <p>
+                    <strong>Datos generados:</strong><br />
+                    {resultadoIA.datos}
+                  </p>
+                )}
+
+                {resultadoIA.mensaje && (
+                  <p>
+                    <strong>Mensaje:</strong> {resultadoIA.mensaje}
+                  </p>
+                )}
 
                 <button
                   onClick={() => setResultadoIA(null)}
