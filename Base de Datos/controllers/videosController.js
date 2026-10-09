@@ -5,6 +5,8 @@ const path = require('path');
 const { error } = require('console');
 
 
+//se instalo multer para recibir archivos multipart/form data
+
 
 exports.crear = async (req, res) => {
   try {
@@ -55,8 +57,20 @@ exports.eliminar = async (req, res) => {
 };
 
 
-//conenctando con python
+// conectando con python
 exports.analizar = (req, res) => {
+
+  // Comprobar que Multer recibió el video
+  if (!req.file) {
+    return res.status(400).json({
+      estado: 'error',
+      error: 'No se recibió ningún video'
+    });
+  }
+
+  // Ruta del video que acaba de subir el usuario
+  const videoPath = req.file.path;
+
   const pythonPath = path.join(
     __dirname,
     '../../Analisis/venv/bin/python'
@@ -67,10 +81,8 @@ exports.analizar = (req, res) => {
     '../../Analisis/main.py'
   );
 
-  const videoPath = path.join(
-    __dirname,
-    '../../Analisis/videos/press_banca.mp4'
-  );
+  console.log('[UPLOAD] Video recibido:');
+  console.log(videoPath);
 
   console.log('[PYTHON] Ejecutando análisis...');
 
@@ -96,6 +108,7 @@ exports.analizar = (req, res) => {
   });
 
   proceso.on('close', (codigo) => {
+
     console.log(
       `[PYTHON] Proceso terminado con código ${codigo}`
     );

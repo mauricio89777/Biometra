@@ -9,6 +9,15 @@ output/
 .env
 .env.*
 
+# por si acaso
+Analisis/venv/
+Analisis/videos/
+Analisis/output/
+Analisis/models/
+Base de Datos/uploads/
+
+
+
 # Formatos de Videos
 *.mp4
 *.avi
