@@ -9,6 +9,10 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 
+#medicion
+import math
+from collections import deque
+
 # CONFIGURACIÓN
 
 
@@ -53,12 +57,38 @@ OUTPUT_CSV = os.path.join(
 )
 
 
+
+
+def calcular_angulo(a, b, c):
+   
+    ba = (a.x - b.x, a.y - b.y)
+    bc = (c.x - b.x, c.y - b.y)
+
+    producto = ba[0] * bc[0] + ba[1] * bc[1]
+
+    norma_ba = math.sqrt(ba[0]**2 + ba[1]**2)
+    norma_bc = math.sqrt(bc[0]**2 + bc[1]**2)
+
+    if norma_ba == 0 or norma_bc == 0:
+        return None
+
+    coseno = producto / (norma_ba * norma_bc)
+    coseno = max(-1.0, min(1.0, coseno))
+
+    return math.degrees(math.acos(coseno))
+
+
+def visibilidad_suficiente(landmark, minimo=0.5):
+    return getattr(landmark, "visibility", 0.0) >= minimo
+
+
 def resultado_json(
     estado,
     video=None,
     video_procesado=None,
     datos=None,
-    error=None
+    error=None,
+    analisis=None
 ):
     resultado = {
         "estado": estado
@@ -75,6 +105,9 @@ def resultado_json(
 
     if error is not None:
         resultado["error"] = error
+
+    if analisis is not None:
+        resultado["analisis"] = analisis
 
     print(
         json.dumps(
@@ -258,8 +291,23 @@ csv_writer.writerow([
 ])
 
 # PROCESAMIENTO
-
 frame_number = 0
+
+# Métricas del press militar
+lado_analizado = None
+angulos = []
+historial_angulos = deque(maxlen=5)
+
+frames_con_angulo = 0
+repeticiones = 0
+fase_bajada = False
+
+# Índices de landmarks de MediaPipe
+lados = {
+    "izquierdo": (11, 13, 15),  # hombro, codo, muñeca
+    "derecho": (12, 14, 16)
+}
+
 
 try:
 
@@ -273,57 +321,124 @@ try:
         frame_number += 1
 
 
-        # ====================================================
         # CONVERTIR BGR -> RGB
-        # ====================================================
 
         rgb_frame = cv2.cvtColor(
             frame,
             cv2.COLOR_BGR2RGB
         )
 
-
-        # ====================================================
         # CREAR IMAGEN DE MEDIAPIPE
-        # ====================================================
 
         mp_image = mp.Image(
             image_format=mp.ImageFormat.SRGB,
             data=rgb_frame
         )
 
-
-        # ====================================================
         # TIMESTAMP
-        # ====================================================
 
         timestamp_ms = int(
             (frame_number / fps) * 1000
         )
 
 
-        # ====================================================
         # DETECTAR POSE
-        # ====================================================
 
         result = detector.detect_for_video(
             mp_image,
             timestamp_ms
         )
 
-
-        # ====================================================
         # LANDMARKS
-        # ====================================================
 
         if result.pose_landmarks:
 
             landmarks = result.pose_landmarks[0]
 
+            # Seleccionar el brazo con mejor visibilidad al inicio
+            if lado_analizado is None:
+                visibilidad_lados = {}
 
-            # ------------------------------------------------
+                for nombre, indices in lados.items():
+                    puntos = [landmarks[i] for i in indices]
+
+                    visibilidad_lados[nombre] = sum(
+                        getattr(p, "visibility", 0.0)
+                        for p in puntos
+                    ) / 3
+
+                mejor_lado = max(
+                    visibilidad_lados,
+                    key=visibilidad_lados.get
+                )
+
+                if visibilidad_lados[mejor_lado] >= 0.5:
+                    lado_analizado = mejor_lado
+
+            # Calcular el ángulo del codo
+            angulo_actual = None
+
+            if lado_analizado is not None:
+                indices = lados[lado_analizado]
+                hombro, codo, muneca = [
+                    landmarks[i] for i in indices
+                ]
+
+                puntos_visibles = all(
+                    visibilidad_suficiente(p)
+                    for p in (hombro, codo, muneca)
+                )
+
+                if puntos_visibles:
+                    angulo_actual = calcular_angulo(
+                        hombro,
+                        codo,
+                        muneca
+                    )
+
+            # Suavizar pequeñas variaciones entre frames
+            if angulo_actual is not None:
+                historial_angulos.append(angulo_actual)
+
+                angulo_suavizado = sum(
+                    historial_angulos
+                ) / len(historial_angulos)
+
+                angulos.append(angulo_suavizado)
+                frames_con_angulo += 1
+
+                # Conteo experimental de repeticiones
+                # Bajada: codo suficientemente flexionado
+                if angulo_suavizado <= 110:
+                    fase_bajada = True
+
+                # Subida: codo vuelve a estar extendido
+                elif angulo_suavizado >= 155 and fase_bajada:
+                    repeticiones += 1
+                    fase_bajada = False
+
+                # Mostrar el ángulo en el video procesado
+                cv2.putText(
+                    frame,
+                    f"Angulo codo: {angulo_suavizado:.1f} grados",
+                    (20, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2
+                )
+
+                cv2.putText(
+                    frame,
+                    f"Repeticiones estimadas: {repeticiones}",
+                    (20, 90),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2
+                )
+
             # GUARDAR DATOS
-            # ------------------------------------------------
 
             timestamp = frame_number / fps
 
@@ -339,10 +454,7 @@ try:
                     landmark.visibility
                 ])
 
-
-            # ------------------------------------------------
             # DIBUJAR LANDMARKS
-            # ------------------------------------------------
 
             for landmark_id, landmark in enumerate(landmarks):
 
@@ -429,11 +541,7 @@ try:
                     2
                 )
 
-
-        # ====================================================
         # INFORMACIÓN DEL VIDEO
-        # ====================================================
-
         cv2.putText(
             frame,
             f"Frame: {frame_number}/{total_frames}",
@@ -444,38 +552,27 @@ try:
             2
         )
 
-
-        # ====================================================
         # GUARDAR VIDEO
-        # ====================================================
 
         out.write(frame)
 
-
-        # ====================================================
-        # MOSTRAR VIDEO
-        # ====================================================
+        # MOSTRAR VIDEO    
 
         cv2.imshow(
             "MediaPipe Pose",
             frame
         )
 
-
-        # ====================================================
         # VELOCIDAD DE REPRODUCCIÓN
-        # ====================================================
-
-        PLAYBACK_SPEED = 0.25
+        
+        PLAYBACK_SPEED = 0.90
 
         delay = int(
             (1000 / fps) / PLAYBACK_SPEED
         )
 
-
-        # ====================================================
         # Q = SALIR
-        # ====================================================
+        
 
         if cv2.waitKey(delay) & 0xFF == ord("q"):
             break
@@ -497,9 +594,7 @@ except Exception as error:
     sys.exit(1)
 
 
-# ============================================================
 # FINALIZAR
-# ============================================================
 
 cap.release()
 out.release()
@@ -510,15 +605,37 @@ detector.close()
 cv2.destroyAllWindows()
 
 
-# ============================================================
-# RESULTADO EXITOSO
-# ============================================================
+# RESULTADO DEL ANÁLISIS
+analisis = {
+    "ejercicio": "press_militar_barra",
+    "lado_analizado": lado_analizado,
+    "repeticiones_estimadas": repeticiones,
+    "frames_procesados": frame_number,
+    "frames_con_angulo": frames_con_angulo,
+    "porcentaje_frames_utiles": round(
+        (frames_con_angulo / frame_number) * 100,
+        2
+    ) if frame_number > 0 else 0,
+    "angulo_minimo": round(min(angulos), 2) if angulos else None,
+    "angulo_maximo": round(max(angulos), 2) if angulos else None,
+    "rango_angular": round(
+        max(angulos) - min(angulos), 2
+    ) if angulos else None,
+    "unidad_angular": "grados",
+    "advertencias": [
+        "Las métricas son estimaciones experimentales en 2D.",
+        "La barra puede ocultar puntos corporales.",
+        "El conteo depende de los umbrales angulares configurados.",
+        "No se determina automáticamente si la técnica es correcta."
+    ]
+}
 
 resultado_json(
     estado="completado",
     video=VIDEO_PATH,
     video_procesado=OUTPUT_VIDEO,
-    datos=OUTPUT_CSV
+    datos=OUTPUT_CSV,
+    analisis=analisis
 )
 
 sys.exit(0)
