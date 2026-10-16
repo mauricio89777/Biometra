@@ -6,8 +6,12 @@ export default function Login({ onLoginSuccess }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  // Estado para la casilla de Términos y Condiciones
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
-  // Base de usuarios iniciales con lista de clientes asociada a los entrenadores
+  // Base de usuarios iniciales
   const [registeredUsers, setRegisteredUsers] = useState([
     { 
       name: 'Carlos Pérez', 
@@ -39,6 +43,7 @@ export default function Login({ onLoginSuccess }) {
     setEmail('');
     setPassword('');
     setName('');
+    setAcceptedTerms(false);
   };
 
   const handleSubmit = (e) => {
@@ -47,6 +52,11 @@ export default function Login({ onLoginSuccess }) {
     setSuccessMessage('');
 
     if (mode === 'register') {
+      if (!acceptedTerms) {
+        setErrorMessage('Debes aceptar los Términos y Condiciones para continuar.');
+        return;
+      }
+
       const userExists = registeredUsers.some(u => u.email.toLowerCase() === email.trim().toLowerCase());
       
       if (userExists) {
@@ -69,6 +79,7 @@ export default function Login({ onLoginSuccess }) {
         setMode('login');
         setEmail(newUser.email);
         setPassword('');
+        setAcceptedTerms(false);
       }, 1500);
 
     } else {
@@ -97,7 +108,7 @@ export default function Login({ onLoginSuccess }) {
     }
   };
 
-  // VISTA PANEL DEL ENTRENADOR
+  // PANEL DEL ENTRENADOR
   if (currentUser && currentUser.role === 'entrenador') {
     return (
       <div style={{
@@ -106,7 +117,8 @@ export default function Login({ onLoginSuccess }) {
         backgroundColor: '#0f172a',
         color: '#fff',
         fontFamily: 'system-ui, sans-serif',
-        padding: '2rem'
+        padding: '2rem',
+        boxSizing: 'border-box'
       }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #334155', paddingBottom: '1rem' }}>
@@ -158,7 +170,7 @@ export default function Login({ onLoginSuccess }) {
     );
   }
 
-  // VISTA FORMULARIO LOGIN / REGISTRO
+  // FORMULARIO PRINCIPAL
   return (
     <div style={{
       width: '100vw',
@@ -167,7 +179,8 @@ export default function Login({ onLoginSuccess }) {
       justifyContent: 'center',
       alignItems: 'center',
       backgroundColor: '#0f172a',
-      fontFamily: 'system-ui, sans-serif'
+      fontFamily: 'system-ui, sans-serif',
+      boxSizing: 'border-box'
     }}>
       <div style={{
         backgroundColor: '#1e293b',
@@ -177,7 +190,8 @@ export default function Login({ onLoginSuccess }) {
         borderRadius: '16px',
         border: '1px solid #38bdf8',
         boxShadow: '0 10px 30px rgba(56, 189, 248, 0.25)',
-        color: '#fff'
+        color: '#fff',
+        position: 'relative'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '1.8rem' }}>
           <h1 style={{ margin: 0, fontSize: '2.2rem', fontWeight: '800' }}>🏋️‍♂️ Biometra</h1>
@@ -272,9 +286,45 @@ export default function Login({ onLoginSuccess }) {
             />
           </div>
 
+          {/* CASILLA DE TÉRMINOS Y CONDICIONES (SOLO EN REGISTRO) */}
+          {mode === 'register' && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginTop: '0.2rem' }}>
+              <input 
+                type="checkbox"
+                id="terms"
+                required
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                style={{ marginTop: '0.2rem', cursor: 'pointer', width: '18px', height: '18px', accentColor: '#38bdf8' }}
+              />
+              <label htmlFor="terms" style={{ color: '#cbd5e1', fontSize: '0.8rem', lineHeight: '1.3', cursor: 'pointer' }}>
+                Acepto los{' '}
+                <button 
+                  type="button" 
+                  onClick={() => setShowTermsModal(true)}
+                  style={{ background: 'none', border: 'none', color: '#38bdf8', textDecoration: 'underline', padding: 0, fontSize: '0.8rem', cursor: 'pointer', fontWeight: 'bold' }}>
+                  Términos y Condiciones
+                </button>
+                {' '}para el uso del servicio y análisis biomecánico.
+              </label>
+            </div>
+          )}
+
           <button 
             type="submit"
-            style={{ marginTop: '0.8rem', backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', padding: '0.85rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.95rem' }}>
+            disabled={mode === 'register' && !acceptedTerms}
+            style={{ 
+              marginTop: '0.8rem', 
+              backgroundColor: mode === 'register' && !acceptedTerms ? '#475569' : '#38bdf8', 
+              color: mode === 'register' && !acceptedTerms ? '#94a3b8' : '#0f172a', 
+              border: 'none', 
+              padding: '0.85rem', 
+              borderRadius: '8px', 
+              cursor: mode === 'register' && !acceptedTerms ? 'not-allowed' : 'pointer', 
+              fontWeight: 'bold', 
+              fontSize: '0.95rem',
+              transition: 'all 0.2s ease'
+            }}>
             {mode === 'login' ? 'Ingresar a la Plataforma' : 'Registrar Cuenta'}
           </button>
         </form>
@@ -286,6 +336,68 @@ export default function Login({ onLoginSuccess }) {
           </div>
         )}
       </div>
+
+      {/* VENTANA MODAL TÉRMINOS Y CONDICIONES */}
+      {showTermsModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(15, 23, 42, 0.85)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '1rem',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{
+            backgroundColor: '#1e293b',
+            border: '1px solid #38bdf8',
+            borderRadius: '16px',
+            maxWidth: '550px',
+            width: '100%',
+            maxHeight: '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '1.8rem',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+            color: '#fff'
+          }}>
+            <h2 style={{ margin: '0 0 1rem 0', color: '#38bdf8', fontSize: '1.4rem' }}>📜 Términos y Condiciones de Biometra</h2>
+            
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: '0.5rem', color: '#cbd5e1', fontSize: '0.85rem', lineHeight: '1.6' }}>
+              <p><strong>1. Uso de la Plataforma:</strong> Biometra es una herramienta tecnológica destinada a asistir y monitorear la ejecución física, postura y métricas biomecánicas en entrenamientos deportivos.</p>
+              
+              <p><strong>2. Descargo de Responsabilidad Médica:</strong> La plataforma no sustituye la asesoría médica profesional ni el criterio de un especialista en rehabilitación física o traumatología. Realiza tus actividades físicas bajo tu propia supervisión y responsabilidad.</p>
+              
+              <p><strong>3. Protección de Datos y Captura Biomecánica:</strong> Todos los datos de movimiento, registros de rutinas y métricas ingresadas son procesadas de manera privada para adaptar tu plan de entrenamiento y no serán compartidas con terceros sin autorización previa.</p>
+              
+              <p><strong>4. Cuentas de Entrenador y Cliente:</strong> Los usuarios son responsables de mantener la confidencialidad de sus credenciales de acceso. Biometra no se hace responsable por accesos no autorizados resultantes del descuido del usuario.</p>
+              
+              <p><strong>5. Modificaciones del Servicio:</strong> Biometra se reserva el derecho de actualizar o ajustar las funciones de software para optimizar la precisión de los análisis.</p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #334155' }}>
+              <button 
+                onClick={() => {
+                  setAcceptedTerms(true);
+                  setShowTermsModal(false);
+                }}
+                style={{ flex: 1, backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', padding: '0.7rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
+                Entendido y Aceptar
+              </button>
+              <button 
+                onClick={() => setShowTermsModal(false)}
+                style={{ backgroundColor: '#334155', color: '#fff', border: 'none', padding: '0.7rem 1.2rem', borderRadius: '8px', cursor: 'pointer' }}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
