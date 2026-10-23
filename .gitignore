@@ -14,7 +14,13 @@ Analisis/venv/
 Analisis/videos/
 Analisis/output/
 Analisis/models/
-Base de Datos/uploads/
+Base de Datos/uploads
+
+#por las dudas de las dudas
+analisis/venv/
+analisis/videos/
+analisis/output/
+analisis/models/
 
 
 
