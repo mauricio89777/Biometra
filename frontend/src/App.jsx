@@ -5,12 +5,57 @@ import Ejercicios from './ejercicios';
 import { Perfil } from './perfil'; 
 import './App.css';
 
+// NUEVO ICONO BIOMETRA: Símbolo abstracto de pivote cinemático y visión por computadora
 const LogoBiometra = () => (
-  <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="100" height="100" rx="22" fill="#020617" />
-    <path d="M20 50 Q35 20, 50 50 T80 50" stroke="#00FF87" strokeWidth="7" strokeLinecap="round" fill="none" />
-    <path d="M20 50 Q35 80, 50 50 T80 50" stroke="#38BDF8" strokeWidth="7" strokeLinecap="round" fill="none" />
-    <circle cx="50" cy="50" r="10" fill="#00FF87" />
+  <svg width="38" height="38" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      {/* Degradado dinámico para la línea de movimiento */}
+      <linearGradient id="kineticGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#06D6A0" /> {/* Esmeralda */}
+        <stop offset="100%" stopColor="#00B4D8" /> {/* Cian */}
+      </linearGradient>
+    </defs>
+    
+    {/* Fondo contenedor redondeado (Navy oscuro) */}
+    <rect width="100" height="100" rx="22" fill="#0B132B" />
+    
+    {/* Hexágono externo: Representa la precisión digital y el encuadre de la IA */}
+    <path 
+      d="M50 15 L80 32.5 L80 67.5 L50 85 L20 67.5 L20 32.5 Z" 
+      stroke="#3A506B" 
+      strokeWidth="3" 
+      strokeLinejoin="round" 
+      opacity="0.6"
+    />
+    
+    {/* Núcleo Central: Articulación esférica / Punto de datos central */}
+    <circle cx="50" cy="50" r="8" fill="#FFFFFF" /> {/* Punto blanco brillante */}
+    <circle cx="50" cy="50" r="14" stroke="#00B4D8" strokeWidth="4" opacity="0.8"/> {/* Aura cian */}
+    
+    {/* Líneas Cinéticas de Movimiento y Fuerza (Vectores) */}
+    {/* Brazo superior (Cian) */}
+    <path 
+      d="M50 36 V22 M50 22 L44 28 M50 22 L56 28" 
+      stroke="#00B4D8" 
+      strokeWidth="5" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    />
+    
+    {/* Arco de rotación y trayectoria discontinua (Esmeralda -> Cian) */}
+    <path 
+      d="M72 40 A25 25 0 0 1 50 75" 
+      stroke="url(#kineticGradient)" 
+      strokeWidth="6" 
+      strokeLinecap="round"
+    />
+    <path 
+      d="M50 75 A25 25 0 0 1 28 40" 
+      stroke="#06D6A0" 
+      strokeWidth="6" 
+      strokeLinecap="round" 
+      strokeDasharray="4 6" /* Línea discontinua: Análisis y rastreo */
+    />
   </svg>
 );
 
@@ -47,12 +92,10 @@ export default function App() {
         </div>
 
         <div className="nav-actions">
-          {/* BOTÓN DESTACADO GIMNASIOS / SEDES */}
           <button onClick={() => setCurrentView('gps')} className="btn-nav-gym">
             📍 Gimnasios / Sedes
           </button>
 
-          {/* SÓLO PERFIL DE USUARIO */}
           <button onClick={() => setCurrentView('perfil')} className="btn-profile">
             👤 Mi Perfil
           </button>
@@ -72,19 +115,17 @@ export default function App() {
         </p>
 
         <div className="hero-buttons">
-          {/* BOTÓN PRINCIPAL */}
           <button onClick={() => setCurrentView('ejercicios')} className="btn-primary">
             🚀 Comenzar Entrenamiento
           </button>
 
-          {/* BOTÓN SECUNDARIO QUE LLEVA A GIMNASIOS Y SEDES */}
           <button onClick={() => setCurrentView('gps')} className="btn-secondary">
             📍 Gimnasios y Sedes
           </button>
         </div>
       </section>
 
-      {/* SECCIÓN SOBRE NOSOTROS EXTENDIDA */}
+      {/* SECCIÓN SOBRE NOSOTROS */}
       <section className="about-section">
         <div className="about-card">
           <h2 className="section-title">💡 Sobre Nosotros</h2>
@@ -133,24 +174,54 @@ export default function App() {
         </div>
       </footer>
 
+      {/* MODAL CON TÉRMINOS Y CONDICIONES EXTENSOS Y DETALLADOS */}
       {activeModal && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content" style={{ maxWidth: '680px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
             <div className="modal-header">
               <h3>
                 {activeModal === 'soporte' && '💬 Centro de Soporte'}
-                {activeModal === 'terminos' && '📜 Términos del Servicio'}
+                {activeModal === 'terminos' && '📜 Términos y Condiciones Legales de Servicio'}
               </h3>
               <button className="close-btn" onClick={() => setActiveModal(null)}>✕</button>
             </div>
 
-            <div className="modal-body">
-              {activeModal === 'soporte' && <p>Contacto oficial: <strong>soporte@biometra.cl</strong></p>}
-              {activeModal === 'terminos' && <p>El uso del sistema biomecánico es asistencial y no sustituye la supervisión médica o kinesiológica.</p>}
+            <div className="modal-body" style={{ overflowY: 'auto', flex: 1, paddingRight: '0.8rem' }}>
+              {activeModal === 'soporte' && (
+                <div>
+                  <p>📧 Email de contacto oficial: <strong>soporte@biometra.cl</strong></p>
+                  <p>📞 Atención al usuario: <strong>+56 2 2900 1122</strong></p>
+                </div>
+              )}
+
+              {activeModal === 'terminos' && (
+                <div style={{ fontSize: '0.88rem', lineHeight: '1.65', color: '#CBD5E1' }}>
+                  <h4 style={{ color: '#06D6A0', marginTop: '0.5rem', marginBottom: '0.3rem' }}>1. Aceptación Binding de Condiciones de Uso</h4>
+                  <p>Al hacer clic en "Aceptar", registrar una cuenta de usuario o hacer uso interactivo de los módulos analíticos de Biometra, usted declara expresamente ser mayor de edad o contar con la patria potestad correspondiente, aceptando en su totalidad este Contrato Marco de Adhesión para el uso de Software como Servicio (SaaS).</p>
+
+                  <h4 style={{ color: '#06D6A0', marginTop: '1rem', marginBottom: '0.3rem' }}>2. Objeto del Software y Deslinde Kinésico/Médico</h4>
+                  <p>Biometra constituye una plataforma informática de visión por computadora destinada al cálculo de vectores angulares y estimación postural para la actividad física general. Bajo ningún precepto los resultados numéricos o diagnósticos cinemáticos emitidos reemplazarán una prescripción kinésica, evaluación médica presencial o diagnóstico fisioterapéutico profesional.</p>
+
+                  <h4 style={{ color: '#06D6A0', marginTop: '1rem', marginBottom: '0.3rem' }}>3. Tratamiento de Datos Biométricos y Archivos Audiovisuales</h4>
+                  <p>En conformidad con las normativas internacionales de protección de datos personales y la Ley N° 19.628 sobre Protección de la Vida Privada, usted consiente expresamente el procesamiento automatizado de los videos subidos a la plataforma. Dichas grabaciones son segmentadas únicamente en mapas de puntos de articulación (pose estimation), estando encriptadas en tránsito y reposo mediante algoritmos AES-256.</p>
+
+                  <h4 style={{ color: '#06D6A0', marginTop: '1rem', marginBottom: '0.3rem' }}>4. Exención de Responsabilidad por Accidentes o Lesiones Físicas</h4>
+                  <p>El usuario reconoce de forma explícita que la realización de levantamientos de pesas, ejercicios gimnásticos y sobrecargas biomecánicas conlleva riesgos inherentes de desgarro, luxación o fracturas. Biometra SpA, sus directores y desarrolladores no asumen responsabilidad civil, penal o extracontractual derivada de la imitación defectuosa o sobreesfuerzo físico realizado durante el uso de la aplicación.</p>
+
+                  <h4 style={{ color: '#06D6A0', marginTop: '1rem', marginBottom: '0.3rem' }}>5. Propiedad Intelectual e Industrial</h4>
+                  <p>Queda estrictamente prohibida la ingeniería inversa, descompilación, extracción de modelos de aprendizaje profundo o redistribución no autorizada del código fuente, interfaces visuales, iso-logotipos o algoritmos propios de la plataforma Biometra. Todos los derechos quedan reservados.</p>
+
+                  <h4 style={{ color: '#06D6A0', marginTop: '1rem', marginBottom: '0.3rem' }}>6. Vínculo Entrenador - Cliente</h4>
+                  <p>Al vincularse con un perfil con rol de "Entrenador", el cliente otorga permiso expreso para que dicho profesional acceda a su historial de grabaciones, métricas de carga y reportes de riesgo postureo a través del panel centralizado.</p>
+
+                  <h4 style={{ color: '#06D6A0', marginTop: '1rem', marginBottom: '0.3rem' }}>7. Jurisdicción y Legislación Aplicable</h4>
+                  <p>El presente acuerdo se rige en su totalidad por las leyes de la República de Chile. Cualquier controversia sobre el cumplimiento o interpretación de este instrumento será sometida a la jurisdicción de los Tribunales Ordinarios de Justicia de Santiago.</p>
+                </div>
+              )}
             </div>
 
-            <button className="btn-modal-close" onClick={() => setActiveModal(null)}>
-              Cerrar
+            <button className="btn-modal-close" onClick={() => setActiveModal(null)} style={{ marginTop: '1rem' }}>
+              Entendido / Cerrar
             </button>
           </div>
         </div>

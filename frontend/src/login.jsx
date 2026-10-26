@@ -1,5 +1,64 @@
 import React, { useState } from 'react';
 
+// NUEVO ICONO BIOMETRA: Símbolo de pivote cinemático, vectores y visión por computadora
+const LogoBiometraIcon = () => (
+  <svg 
+    width="42" 
+    height="42" 
+    viewBox="0 0 100 100" 
+    fill="none" 
+    xmlns="http://www.w3.org/2000/svg" 
+    style={{ verticalAlign: 'middle' }}
+  >
+    <defs>
+      <linearGradient id="kineticGradientLogin" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stopColor="#00FF87" />
+        <stop offset="100%" stopColor="#38BDF8" />
+      </linearGradient>
+    </defs>
+
+    {/* Fondo en Dark Navy */}
+    <rect width="100" height="100" rx="22" fill="#020617" />
+
+    {/* Hexágono de visión por computadora y precisión */}
+    <path 
+      d="M50 15 L80 32.5 L80 67.5 L50 85 L20 67.5 L20 32.5 Z" 
+      stroke="#334155" 
+      strokeWidth="3" 
+      strokeLinejoin="round" 
+      opacity="0.6"
+    />
+
+    {/* Nodo articular central */}
+    <circle cx="50" cy="50" r="8" fill="#FFFFFF" />
+    <circle cx="50" cy="50" r="14" stroke="#38BDF8" strokeWidth="4" opacity="0.8"/>
+
+    {/* Vector superior de fuerza */}
+    <path 
+      d="M50 36 V22 M50 22 L44 28 M50 22 L56 28" 
+      stroke="#38BDF8" 
+      strokeWidth="5" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    />
+
+    {/* Arco cinemático continuo y trayectoria de rastreo de puntos */}
+    <path 
+      d="M72 40 A25 25 0 0 1 50 75" 
+      stroke="url(#kineticGradientLogin)" 
+      strokeWidth="6" 
+      strokeLinecap="round"
+    />
+    <path 
+      d="M50 75 A25 25 0 0 1 28 40" 
+      stroke="#00FF87" 
+      strokeWidth="6" 
+      strokeLinecap="round" 
+      strokeDasharray="4 6"
+    />
+  </svg>
+);
+
 export default function Login({ onLoginSuccess }) {
   const [mode, setMode] = useState('login'); 
   const [role, setRole] = useState('cliente');
@@ -44,7 +103,7 @@ export default function Login({ onLoginSuccess }) {
       const userExists = registeredUsers.some(u => u.email.toLowerCase() === email.trim().toLowerCase());
       
       if (userExists) {
-        setErrorMessage('Correo electrónico o contraseña incorrectos.');
+        setErrorMessage('El correo electrónico ya se encuentra registrado.');
         return;
       }
 
@@ -90,14 +149,10 @@ export default function Login({ onLoginSuccess }) {
     <div style={{ width: '100vw', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#0B1120', fontFamily: "'Inter', system-ui, sans-serif", padding: '1rem', boxSizing: 'border-box' }}>
       <div style={{ backgroundColor: '#0F172A', width: '100%', maxWidth: '440px', padding: '2.5rem 2rem', borderRadius: '20px', border: '1px solid #38BDF8', boxShadow: '0 10px 30px rgba(56, 189, 248, 0.2)', color: '#fff' }}>
         
+        {/* BRAND CON NUEVO LOGO BIOMECÁNICO */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.5rem' }}>
-            <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
-              <rect width="100" height="100" rx="22" fill="#020617" />
-              <path d="M20 50 Q35 20, 50 50 T80 50" stroke="#00FF87" strokeWidth="7" strokeLinecap="round" fill="none" />
-              <path d="M20 50 Q35 80, 50 50 T80 50" stroke="#38BDF8" strokeWidth="7" strokeLinecap="round" fill="none" />
-              <circle cx="50" cy="50" r="10" fill="#00FF87" />
-            </svg>
+            <LogoBiometraIcon />
             <span style={{ fontSize: '1.8rem', fontWeight: '900', letterSpacing: '1px', background: 'linear-gradient(90deg, #00FF87, #38BDF8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               BIOMETRA
             </span>
@@ -189,14 +244,17 @@ export default function Login({ onLoginSuccess }) {
         )}
       </div>
 
-      {/* MODAL EXTENSO Y COMPLEJO DE TÉRMINOS Y CONDICIONES */}
+      {/* MODAL DE TÉRMINOS Y CONDICIONES */}
       {showTermsModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(11, 17, 32, 0.92)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1.5rem', boxSizing: 'border-box', backdropFilter: 'blur(6px)' }}>
           <div style={{ backgroundColor: '#0F172A', border: '1px solid #38BDF8', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', padding: '2rem', color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.7)' }}>
             
-            <h2 style={{ margin: '0 0 1rem 0', color: '#38BDF8', fontSize: '1.35rem', fontWeight: '800', borderBottom: '1px solid #1E293B', paddingBottom: '0.8rem' }}>
-              📜 Marco Legal, Términos de Servicio y Privacidad Biomécnica
-            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1rem', borderBottom: '1px solid #1E293B', paddingBottom: '0.8rem' }}>
+              <LogoBiometraIcon />
+              <h2 style={{ margin: 0, color: '#38BDF8', fontSize: '1.35rem', fontWeight: '800' }}>
+                Marco Legal, Términos de Servicio y Privacidad Biomécnica
+              </h2>
+            </div>
             
             <div style={{ overflowY: 'auto', flex: 1, paddingRight: '0.8rem', color: '#CBD5E1', fontSize: '0.85rem', lineHeight: '1.65' }}>
               <p><em>Última actualización: Edición Oficial Biometra Chile SpA.</em></p>
