@@ -1,0 +1,153 @@
+{
+  "key": "peso_muerto_rumano",
+  "title": "Peso muerto rumano",
+  "camera": "lateral",
+  "rep": {
+    "signal": "cadera",
+    "direction": "valley",
+    "rest": 160,
+    "target": 110,
+    "hysteresis": 8,
+    "min_duration_s": 1.0,
+    "min_swing": 40
+  },
+  "metrics": {
+    "cadera": {
+      "label": "Cadera",
+      "type": "angle",
+      "points": [
+        "shoulder",
+        "hip",
+        "knee"
+      ],
+      "unidad": "deg"
+    },
+    "rodilla": {
+      "label": "Rodilla",
+      "type": "angle",
+      "points": [
+        "hip",
+        "knee",
+        "ankle"
+      ],
+      "unidad": "deg"
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    },
+    "cadera_atras": {
+      "label": "Cadera atras",
+      "type": "ankle_ahead",
+      "points": [
+        "hip",
+        "knee",
+        "ankle",
+        "heel",
+        "foot_index"
+      ],
+      "decimales": 2
+    },
+    "barra_pierna": {
+      "label": "Barra a la pierna",
+      "type": "point_segment_distance",
+      "points": [
+        "wrist",
+        "hip",
+        "knee",
+        "ankle"
+      ],
+      "decimales": 2
+    }
+  },
+  "overlay": [
+    "cadera",
+    "tronco"
+  ],
+  "rules": [
+    {
+      "codigo": "bisagra_corta",
+      "nivel": "aviso",
+      "metric": "cadera",
+      "stat": "min",
+      "op": ">",
+      "value": "target",
+      "peso": 15,
+      "mensaje": "Bisagra de cadera corta en {n_rep} (rep. {reps}): en la peor, la cadera solo se flexionó hasta {valor:.0f}° (referencia ≤ {umbral:.0f}°).",
+      "correccion": "Lleva la cadera hacia atrás y baja el tronco hasta notar la tensión en los isquiotibiales (barra a media espinilla). Si tus isquiotibiales limitan el rango, es normal: no fuerces perdiendo la postura."
+    },
+    {
+      "codigo": "rodillas_flexionadas",
+      "nivel": "aviso",
+      "metric": "rodilla",
+      "stat": "min",
+      "op": "<",
+      "value": 130,
+      "peso": 25,
+      "mensaje": "Flexionas demasiado las rodillas en {reps_txt}: llegaron a {valor:.0f}° (referencia ≥ {umbral:.0f}°), y el movimiento se parece a una sentadilla.",
+      "correccion": "Mantén las rodillas casi fijas, solo ligeramente flexionadas, y lleva la cadera hacia atrás en lugar de hacia abajo."
+    },
+    {
+      "codigo": "cadera_sin_retroceso",
+      "nivel": "aviso",
+      "metric": "cadera_atras",
+      "stat": "en_fondo",
+      "op": "<",
+      "value": 0.1,
+      "peso": 20,
+      "mensaje": "La cadera casi no se va hacia atrás en {reps_txt} (valor {valor:.2f}; referencia ≥ {umbral:.2f}): estás bajando la cadera en vez de empujarla atrás.",
+      "correccion": "Empuja la cadera hacia atrás, como cerrando una puerta con el glúteo, con las espinillas casi verticales."
+    },
+    {
+      "codigo": "barra_alejada",
+      "nivel": "aviso",
+      "metric": "barra_pierna",
+      "stat": "max",
+      "op": ">",
+      "value": 0.22,
+      "peso": 20,
+      "mensaje": "La barra (o las mancuernas) se aleja del cuerpo en {reps_txt}: llegó a {valor:.2f} veces la longitud de tu pierna (tolerancia {umbral:.2f}).",
+      "correccion": "Mantén la barra pegada a los muslos y a las espinillas durante todo el recorrido."
+    },
+    {
+      "codigo": "extension_incompleta",
+      "nivel": "info",
+      "metric": "cadera",
+      "stat": "max",
+      "op": "<",
+      "value": 165,
+      "peso": 5,
+      "mensaje": "No terminas de extender la cadera arriba en {n_rep} (rep. {reps}): hasta {valor:.0f}° (referencia ≥ {umbral:.0f}°).",
+      "correccion": "Termina de pie, con los glúteos apretados, sin inclinarte hacia atrás."
+    },
+    {
+      "codigo": "bajada_rapida",
+      "nivel": "info",
+      "metric": "fase_ida_s",
+      "op": "<",
+      "value": 0.8,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Bajas muy rápido en {n_rep} (rep. {reps}): {valor:.1f} s en la peor.",
+      "correccion": "Controla la bajada (unos 2 segundos) para mantener la tensión en isquiotibiales y glúteos."
+    }
+  ],
+  "consistencia": {
+    "metric": "cadera",
+    "stat": "min",
+    "max_std": 12,
+    "mensaje": "La profundidad de la bisagra varía bastante entre repeticiones (desviación de {valor:.0f}°).",
+    "correccion": "Baja siempre hasta el mismo punto (por ejemplo, media espinilla)."
+  },
+  "advertencias_extra": [
+    "No se evalúa la curvatura lumbar (redondeo de espalda): no es medible de forma fiable con un modelo de pose en 2D. Si te preocupa, pide que un entrenador revise tu técnica en persona."
+  ],
+  "mensaje_ok": "Buen peso muerto rumano según lo medible de perfil: bisagra de cadera, rodillas y barra bien controladas (la espalda lumbar no se puede evaluar en 2D).",
+  "mensaje_ok_con_notas": "Bisagra, rodillas y barra correctas; revisa las observaciones informativas."
+}

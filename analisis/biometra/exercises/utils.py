@@ -1,5 +1,11 @@
 import numpy as np
 
+# Índices de MediaPipe Pose por lado del cuerpo
+SIDES = {
+    "izquierdo": dict(shoulder=11, elbow=13, wrist=15, hip=23, knee=25, ankle=27, heel=29, foot_index=31),
+    "derecho": dict(shoulder=12, elbow=14, wrist=16, hip=24, knee=26, ankle=28, heel=30, foot_index=32),
+}
+
 
 def r(x, n=1):
     """Redondea y convierte NaN/None a None (JSON válido)."""

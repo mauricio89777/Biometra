@@ -1,0 +1,162 @@
+{
+  "key": "press_banca",
+  "title": "Press de banca",
+  "camera": "lateral (perfil del banco); desde la cabeza del banco se evalúa también la simetría",
+  "lado": "movimiento",
+  "rep": {
+    "signal": "codo",
+    "direction": "valley",
+    "rest": 155,
+    "target": 100,
+    "hysteresis": 8,
+    "min_duration_s": 0.8,
+    "min_swing": 40
+  },
+  "metrics": {
+    "codo": {
+      "label": "Codo",
+      "type": "angle",
+      "points": [
+        "shoulder",
+        "elbow",
+        "wrist"
+      ],
+      "unidad": "deg"
+    },
+    "codo_izq": {
+      "label": "Codo izq",
+      "type": "angle",
+      "points": [
+        "izq_shoulder",
+        "izq_elbow",
+        "izq_wrist"
+      ],
+      "unidad": "deg"
+    },
+    "codo_der": {
+      "label": "Codo der",
+      "type": "angle",
+      "points": [
+        "der_shoulder",
+        "der_elbow",
+        "der_wrist"
+      ],
+      "unidad": "deg"
+    },
+    "asimetria": {
+      "label": "Asimetria",
+      "type": "derived",
+      "op": "absdiff",
+      "from": [
+        "codo_izq",
+        "codo_der"
+      ],
+      "unidad": "deg"
+    },
+    "dif_codos": {
+      "label": "Izq - der",
+      "type": "derived",
+      "op": "diff",
+      "from": [
+        "codo_izq",
+        "codo_der"
+      ],
+      "unidad": "deg"
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    }
+  },
+  "overlay": [
+    "codo",
+    "asimetria"
+  ],
+  "rules": [
+    {
+      "codigo": "recorrido_incompleto",
+      "nivel": "aviso",
+      "metric": "codo",
+      "stat": "min",
+      "op": ">",
+      "value": "target",
+      "peso": 25,
+      "mensaje": "No bajas lo suficiente la barra en {n_rep} (rep. {reps}): en la peor, el codo solo se flexionó hasta {valor:.0f}° (objetivo ≤ {umbral:.0f}°).",
+      "correccion": "Baja la barra hasta rozar el pecho, con control. Si no puedes, reduce el peso en vez de acortar el recorrido."
+    },
+    {
+      "codigo": "extension_incompleta",
+      "nivel": "aviso",
+      "metric": "codo",
+      "stat": "max",
+      "op": "<",
+      "value": 160,
+      "peso": 10,
+      "mensaje": "No terminas de extender los codos arriba en {n_rep} (rep. {reps}): {valor:.0f}° (referencia ≥ {umbral:.0f}°).",
+      "correccion": "Termina cada repetición con los brazos extendidos, sin bloquear los codos de golpe."
+    },
+    {
+      "codigo": "asimetria",
+      "nivel": "aviso",
+      "metric": "asimetria",
+      "stat": "en_fondo",
+      "op": ">",
+      "value": 20,
+      "peso": 20,
+      "mensaje": "Los brazos no bajan igual en {reps_txt}: diferencia de {valor:.0f}° en el codo en el punto más bajo (tolerancia {umbral:.0f}°).",
+      "correccion": "Baja y empuja con los dos brazos a la vez; si uno va retrasado, reduce el peso o trabaja ese lado con mancuernas."
+    },
+    {
+      "codigo": "tronco_inestable",
+      "nivel": "info",
+      "metric": "tronco",
+      "stat": "rango",
+      "op": ">",
+      "value": 8,
+      "peso": 5,
+      "mensaje": "El tronco cambia de posición durante {reps_txt} ({valor:.0f}°): posible arco o despegue de la cadera del banco.",
+      "correccion": "Mantén glúteos, espalda y cabeza apoyados en el banco; un arco ligero es normal, pero no debe aumentar al empujar."
+    },
+    {
+      "codigo": "descenso_rapido",
+      "nivel": "info",
+      "metric": "fase_ida_s",
+      "op": "<",
+      "value": 0.8,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Bajas la barra muy rápido en {n_rep} (rep. {reps}): {valor:.1f} s en la peor.",
+      "correccion": "Controla el descenso (1,5 a 2 segundos) y evita rebotar la barra en el pecho."
+    },
+    {
+      "codigo": "subida_lenta",
+      "nivel": "info",
+      "metric": "fase_vuelta_s",
+      "op": ">",
+      "value": 2.5,
+      "peso": 0,
+      "solo_completas": true,
+      "mensaje": "La subida es muy lenta en {n_rep} (rep. {reps}): {valor:.1f} s en la peor; posible punto de fallo.",
+      "correccion": "Si la barra se atasca, reduce el peso o pide ayuda de un compañero para la última repetición."
+    }
+  ],
+  "consistencia": {
+    "metric": "codo",
+    "stat": "min",
+    "max_std": 12,
+    "mensaje": "La profundidad varía bastante entre repeticiones (desviación de {valor:.0f}°).",
+    "correccion": "Intenta bajar siempre hasta el mismo punto del pecho; si te cansas, termina la serie."
+  },
+  "advertencias_extra": [
+    "La simetría entre brazos solo se evalúa si los dos se ven (cámara desde la cabeza del banco); de perfil, el brazo lejano queda tapado.",
+    "No se mide la trayectoria de la barra ni el agarre, y el ángulo del codo depende de la posición de la cámara."
+  ],
+  "mensaje_ok": "Buen press de banca según lo medible: recorrido completo, extensión arriba y ritmo controlado.",
+  "mensaje_ok_con_notas": "Recorrido y extensión correctos; revisa las observaciones informativas."
+}

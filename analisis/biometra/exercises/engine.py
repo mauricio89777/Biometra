@@ -7,7 +7,7 @@ Estructura de un archivo en configs/<ejercicio>.json:
             alcanzar para considerar el recorrido completo), hysteresis, min_duration_s, min_swing
   metrics:  nombre -> {label, type, points, mode?, unidad?, decimales?}   (ver metrics.py)
   rules:    lista de reglas evaluadas por repetición:
-              codigo, nivel ("aviso"|"info"), metric, stat ("min"|"max"|"en_fondo"|"subida_desde_fondo"|"bajada_desde_fondo"), op (">"|"<"),
+              codigo, nivel ("aviso"|"info"), metric, stat ("min"|"max"|"en_fondo"|"subida_desde_fondo"|"bajada_desde_fondo"|"rango"), op (">"|"<"),
               value (número o "target"), peso (puntos que resta), mensaje, correccion
             metric también puede ser "duracion_s", "fase_ida_s" o "fase_vuelta_s".
             En mensaje: {valor} {umbral} {n} {n_rep} {total} {reps} {reps_txt}
@@ -21,19 +21,19 @@ Estructura de un archivo en configs/<ejercicio>.json:
             se consideran movimientos de colocación/recogida de la barra: no se cuentan ni evalúan.
             Las repeticiones interiores poco profundas SÍ se evalúan (ahí está el feedback útil).
   overlay (opcional): métricas a mostrar sobre el video
-  mensaje_ok, mensaje_ok_con_notas (opcionales)
+  mensaje_ok, mensaje_ok_con_notas, consejo_sin_datos (opcionales)
+  lado (opcional): "movimiento" -> analiza el lado donde más se mueve la señal (unilaterales); por defecto, el más visible
+  rol (opcional): metric, umbral -> cada repetición recibe rol_pierna_cercana (delantera/trasera/indeterminado)
+  regla.cuando (opcional): {"rol": [..]} la regla solo se evalúa en repeticiones con ese papel (también en consistencia)
+  regla.solo_completas (opcional): la regla solo se evalúa en repeticiones con recorrido completo (p. ej. ritmo)
 """
 from dataclasses import dataclass, field
 
 import numpy as np
 
-from .metrics import build_series
-from .utils import r
+from .metrics import build_all, build_series, es_fijo, indice
+from .utils import SIDES, r
 
-SIDES = {
-    "izquierdo": dict(shoulder=11, elbow=13, wrist=15, hip=23, knee=25, ankle=27, heel=29, foot_index=31),
-    "derecho": dict(shoulder=12, elbow=14, wrist=16, hip=24, knee=26, ankle=28, heel=30, foot_index=32),
-}
 TIME_FIELDS = ("duracion_s", "fase_ida_s", "fase_vuelta_s")
 MIN_CONFIANZA = 0.6
 ORDEN_NIVEL = {"aviso": 0, "info": 1, "ok": 2}
@@ -78,11 +78,9 @@ class RepExercise:
         """tiempos: array con el instante (s) de cada frame, o un fps numérico."""
         w, h = size
         t = np.arange(len(lm)) / tiempos if np.isscalar(tiempos) else np.asarray(tiempos, dtype=float)
-        side = self._pick_side(lm)
-        ids = SIDES[side]
-        raws, series = {}, {}
-        for name, spec in self.specs.items():
-            raws[name], series[name] = build_series(lm, spec, ids, w, h, self.vis_min)
+        side = self._pick_side(lm, w, h)
+        ids = SIDES.get(side, SIDES["izquierdo"])      # "ambos": todas las métricas fijan su lado
+        raws, series = build_all(lm, self.specs, ids, w, h, self.vis_min)
 
         reps = self._count_reps(series[self.signal], t)
         self._add_stats(reps, series, t)
@@ -94,12 +92,27 @@ class RepExercise:
         for x in reps:
             x.pop("_cierre", None)
 
-        puntos = {ids[p] for s in self.specs.values() for p in s["points"]}
+        puntos = {indice(p, ids) for s in self.specs.values() for p in s.get("points", [])}
         return Analysis(side, metrics, reps, feedback, score, overlay, sorted(puntos))
 
     # ------------------------------------------------------------ lado y repeticiones
-    def _pick_side(self, lm):
-        nombres = {p for s in self.specs.values() for p in s["points"]}
+    def _pick_side(self, lm, w, h):
+        if self.cfg.get("lado") == "movimiento":
+            # Ejercicios unilaterales: se elige el lado donde la señal de repetición más se mueve (el brazo que
+            # trabaja), no el más visible (que puede ser el que apoya y está quieto).
+            spec = self.specs[self.signal]
+            if spec["type"] != "derived" and not any(es_fijo(p) for p in spec["points"]):
+                amp = {}
+                for side, ids in SIDES.items():
+                    _, s = build_series(lm, spec, ids, w, h, self.vis_min)
+                    v = s[~np.isnan(s)]
+                    amp[side] = float(np.percentile(v, 95) - np.percentile(v, 5)) if len(v) >= 10 else -1.0
+                mejor = max(amp, key=amp.get)
+                if amp[mejor] > 0:
+                    return mejor
+        nombres = {p for s in self.specs.values() for p in s.get("points", []) if not es_fijo(p)}
+        if not nombres:
+            return "ambos"                   # ninguna métrica depende del lado analizado
         scores = {}
         for side, ids in SIDES.items():
             cols = [ids[n] for n in nombres]
@@ -114,6 +127,14 @@ class RepExercise:
         rest = self.sign * self.rest
         enter = rest - self.hyst
         reps, start, top = [], None, None
+
+        def salida_de_reposo(i):
+            """Primer frame del movimiento: retrocede desde el cruce del umbral de entrada hasta que la señal
+            salió del reposo. Sin esto, las fases (ida/vuelta) y la duración se medirían solo desde el umbral."""
+            j = i
+            while j > 0 and not np.isnan(x[j - 1]) and x[j - 1] < rest:
+                j -= 1
+            return j
 
         def cerrar(end):
             # Tras llegar a reposo solo se sigue midiendo `ventana_ext` segundos (pico de extensión).
@@ -139,7 +160,7 @@ class RepExercise:
                 "duracion_s": r(dur, 2),
                 "fase_ida_s": r(t[fondo] - t[start], 2),
                 "fase_vuelta_s": r(t[top] - t[fondo], 2),
-                "recorrido_completo": bool(np.nanmin(ida) <= self.sign * self.target),
+                "recorrido_completo": bool(round(float(np.nanmin(ida)), 1) <= self.sign * self.target),   # mismo redondeo que las reglas
             })
 
         for i, a in enumerate(x):
@@ -147,14 +168,14 @@ class RepExercise:
                 continue
             if start is None:
                 if a < enter:
-                    start, top = i, None
+                    start, top = salida_de_reposo(i), None
                 continue
             if top is None:
                 if a >= rest:
                     top = i
             elif a < enter:
                 cerrar(i)
-                start, top = i, None
+                start, top = salida_de_reposo(i), None
         if start is not None and top is not None:
             cerrar(len(x) - 1)
         return reps
@@ -177,6 +198,8 @@ class RepExercise:
             x["valores"] = vals
             x["fiable"] = self._es_fiable(vals)
             x["colocacion"] = False
+            if self.cfg.get("rol"):
+                x["rol_pierna_cercana"] = self._rol(vals)
 
     def _marcar_colocacion(self, reps):
         cfg = self.cfg.get("colocacion")
@@ -202,6 +225,19 @@ class RepExercise:
         while j >= i and somera(reps[j]):
             reps[j]["colocacion"] = True
             j -= 1
+
+    def _rol(self, vals):
+        """'delantera' / 'trasera' / 'indeterminado' según el signo de la métrica de rol en el fondo."""
+        cfg = self.cfg["rol"]
+        v = vals[cfg["metric"]]["en_fondo"]
+        if v is None:
+            return "indeterminado"
+        u = cfg.get("umbral", 0.15)
+        return "delantera" if v > u else "trasera" if v < -u else "indeterminado"
+
+    @staticmethod
+    def _cumple_cuando(x, cuando):
+        return not cuando or x.get("rol_pierna_cercana") in cuando["rol"]
 
     def _es_fiable(self, vals):
         coh = self.cfg.get("coherencia")
@@ -230,6 +266,9 @@ class RepExercise:
         if stat == "subida_desde_fondo":      # cuánto sube la métrica respecto a su valor en el fondo
             a, b = v["max"], v["en_fondo"]
             return None if a is None or b is None else a - b
+        if stat == "rango":                   # recorrido total de la métrica dentro de la repetición (máx - mín)
+            a, b = v["max"], v["min"]
+            return None if a is None or b is None else a - b
         if stat == "bajada_desde_fondo":      # cuánto baja la métrica respecto a su valor en el fondo
             a, b = v["en_fondo"], v["min"]
             return None if a is None or b is None else a - b
@@ -239,7 +278,7 @@ class RepExercise:
     def _momento(rep, metric, stat):
         """Segundo del video en que ocurre el valor evaluado (para que el frontend salte ahí)."""
         clave = {"min": "min_s", "max": "max_s",
-                 "subida_desde_fondo": "max_s", "bajada_desde_fondo": "min_s"}.get(stat)
+                 "subida_desde_fondo": "max_s", "bajada_desde_fondo": "min_s", "rango": "max_s"}.get(stat)
         if metric not in TIME_FIELDS and clave:
             m = rep["valores"][metric].get(clave)
             if m is not None:
@@ -247,7 +286,7 @@ class RepExercise:
         return rep["fondo_s"]
 
     def _evaluate(self, reps, conf):
-        fb, criterios, sin_datos = [], [], set()
+        fb, criterios, sin_datos = [], [], []
         fiables = [x for x in reps if x["fiable"] and not x["colocacion"]]
         penal = {x["indice"]: 0 for x in reps}
         for x in reps:
@@ -279,20 +318,17 @@ class RepExercise:
             metric = rule["metric"]
             if metric in self.specs and conf.get(metric, 1) < MIN_CONFIANZA:
                 if metric not in sin_datos:
-                    sin_datos.add(metric)
-                    etiqueta = self.specs[metric].get("label", metric)
-                    fb.append({"codigo": f"sin_datos_{metric}", "nivel": "info", "metrica": metric,
-                               "mensaje": f"No se pudo evaluar «{etiqueta}» con fiabilidad: los puntos del "
-                                          f"cuerpo necesarios se ven poco en el video.",
-                               "correccion": "Graba de nuevo con el cuerpo completo visible, buena luz y la "
-                                             "cámara fija.",
-                               "repeticiones": [], "confianza": r(conf[metric], 2)})
+                    sin_datos.append(metric)
                 continue
 
             thr = self.target if rule["value"] == "target" else rule["value"]
             mayor = rule["op"] == ">"
             evaluadas, malas = 0, []
             for x in fiables:
+                if rule.get("solo_completas") and not x["recorrido_completo"]:
+                    continue        # el ritmo de una repetición muy superficial no es comparable
+                if not self._cumple_cuando(x, rule.get("cuando")):
+                    continue        # regla para un papel concreto de la pierna (delantera/trasera)
                 v = self._rep_value(x, metric, rule.get("stat", "min"))
                 if v is None:
                     continue
@@ -315,12 +351,21 @@ class RepExercise:
                 "mensaje": rule["mensaje"].format(valor=peor[1], umbral=thr, n=len(malas),
                                                   n_rep=(f"{len(malas)} repeticiones" if len(malas) != 1 else "1 repetición"),
                                                   reps_txt=_reps_txt(ids),
-                                                  total=len(fiables), reps=", ".join(map(str, ids))),
+                                                  total=evaluadas, reps=", ".join(map(str, ids))),
                 "correccion": rule.get("correccion"),
                 "repeticiones": ids, "valor_peor": r(peor[1], 2), "umbral": thr,
                 "momento_s": self._momento(peor[0], metric, rule.get("stat", "min")),
                 "confianza": r(conf.get(metric, 1.0), 2),
             })
+
+        if sin_datos:
+            fb.append({"codigo": "sin_datos", "nivel": "info", "metrica": None, "metricas": list(sin_datos),
+                       "mensaje": "No se pudo evaluar con fiabilidad: "
+                                  + ", ".join(self.specs[m].get("label", m) for m in sin_datos)
+                                  + " (los puntos del cuerpo necesarios se ven poco en el video).",
+                       "correccion": self.cfg.get("consejo_sin_datos", "Graba de nuevo con el cuerpo completo "
+                                                                        "visible, buena luz y la cámara fija."),
+                       "repeticiones": [], "confianza": r(min(conf[m] for m in sin_datos), 2)})
 
         fb += self._generic_checks(fiables)
 
@@ -367,8 +412,9 @@ class RepExercise:
                                          "de la serie.",
                            "repeticiones": [reps[-1]["indice"]]})
         c = self.cfg.get("consistencia")
-        if c and len(reps) >= 3:
-            vals = [self._rep_value(x, c["metric"], c.get("stat", "min")) for x in reps]
+        sel = [x for x in reps if self._cumple_cuando(x, c.get("cuando"))] if c else []
+        if c and len(sel) >= 3:
+            vals = [self._rep_value(x, c["metric"], c.get("stat", "min")) for x in sel]
             vals = [v for v in vals if v is not None]
             if len(vals) >= 3:
                 desv = float(np.std(vals))

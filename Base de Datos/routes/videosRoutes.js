@@ -20,6 +20,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+//Ruta para obter los diferentes ejercicios 
+router.get('/ejercicios', controller.listarEjercicios);
+
 router.get('/', controller.listar);
 router.get('/:id', controller.obtener);
 

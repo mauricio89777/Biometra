@@ -24,7 +24,7 @@ Configuración JSON (configs/<ejercicio>.json) con "tipo": "isometrico":
 import numpy as np
 
 from .engine import MIN_CONFIANZA, ORDEN_NIVEL, SIDES, Analysis
-from .metrics import build_series
+from .metrics import build_all, es_fijo, indice
 from .utils import r
 
 GRIS = (170, 170, 170)
@@ -56,10 +56,8 @@ class HoldExercise:
         t = np.arange(n) / tiempos if np.isscalar(tiempos) else np.asarray(tiempos, dtype=float)
         side = self._pick_side(lm)
         ids = SIDES[side]
-        raws, series = {}, {}
-        for name, spec in self.specs.items():
-            raws[name], series[name] = build_series(lm, spec, ids, w, h, self.vis_min)
-        puntos = sorted({ids[p] for s in self.specs.values() for p in s["points"]})
+        raws, series = build_all(lm, self.specs, ids, w, h, self.vis_min)
+        puntos = sorted({indice(p, ids) for s in self.specs.values() for p in s.get("points", [])})
         con_persona = r((~np.isnan(lm[:, 0, 0])).mean() * 100)
 
         tramo = self._mejor_tramo(series[self.pos["metric"]], t)
@@ -89,7 +87,7 @@ class HoldExercise:
 
     # ------------------------------------------------------------ detección del tramo
     def _pick_side(self, lm):
-        nombres = {p for s in self.specs.values() for p in s["points"]}
+        nombres = {p for s in self.specs.values() for p in s.get("points", []) if not es_fijo(p)}
         scores = {side: float(np.nan_to_num(lm[:, [ids[n] for n in nombres], 3]).mean())
                   for side, ids in SIDES.items()}
         return max(scores, key=scores.get)

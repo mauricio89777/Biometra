@@ -1,7 +1,10 @@
 """Analizador de ejercicios de Biometra.
 
 Uso:
-    python main.py <video> --exercise press_militar --job-id abc123 [--csv]
+    python main.py <video> --exercise press_militar --job-id abc123 [--csv] [--informe]
+    python main.py --listar                                   # ejercicios disponibles (JSON)
+    python main.py <video> --exercise X --guardar-landmarks   # guarda los puntos del cuerpo (.npz)
+    python main.py <video> --exercise X --desde-landmarks f.npz   # reanaliza sin volver a ejecutar MediaPipe
 
 stdout: SOLO un JSON final. Logs por stderr.
 """
@@ -14,8 +17,8 @@ import warnings
 
 import numpy as np
 
+from biometra import informe
 from biometra.exercises import CONFIGS, load_exercise
-from biometra.pose import PoseExtractor
 from biometra.video_io import extract_landmarks, log, render_video
 
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -40,31 +43,60 @@ def write_csv(path, lm, tiempos):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("video")
+    ap.add_argument("video", nargs="?")
     ap.add_argument("--exercise", default="press_militar", choices=sorted(CONFIGS))
     ap.add_argument("--job-id", default=None)
     ap.add_argument("--out-dir", default=os.path.join(BASE_DIR, "output"))
     ap.add_argument("--model", default=os.path.join(BASE_DIR, "models", "pose_landmarker_full.task"))
     ap.add_argument("--csv", action="store_true", help="Exporta también los landmarks en CSV")
+    ap.add_argument("--listar", action="store_true", help="Imprime en JSON los ejercicios disponibles y termina")
+    ap.add_argument("--guardar-landmarks", action="store_true",
+                    help="Guarda los puntos del cuerpo en <job>_landmarks.npz para poder reanalizar sin MediaPipe")
+    ap.add_argument("--desde-landmarks", default=None,
+                    help="Usa un .npz guardado en vez de ejecutar MediaPipe (reanálisis rápido al ajustar umbrales)")
+    ap.add_argument("--informe", action="store_true",
+                    help="Crea <job>_informe.html (video + tabla + enlaces) y muestra un resumen en la terminal")
     args = ap.parse_args()
+
+    if args.listar:
+        emit({"ejercicios": [
+            {"clave": k, "titulo": c["title"], "tipo": c.get("tipo", "repeticiones"), "camara": c["camera"],
+             "advertencias": c.get("advertencias_extra", [])}
+            for k, c in sorted(CONFIGS.items(), key=lambda kv: kv[1]["title"])]})
+    if not args.video:
+        ap.error("falta el video (o usa --listar)")
 
     video = os.path.abspath(args.video)
     if not os.path.exists(video):
         emit({"estado": "error", "error": f"No existe el video: {video}"}, 1)
-    if not os.path.exists(args.model):
+    if args.desde_landmarks:
+        if not os.path.exists(args.desde_landmarks):
+            emit({"estado": "error", "error": f"No existe el archivo de landmarks: {args.desde_landmarks}"}, 1)
+    elif not os.path.exists(args.model):
         emit({"estado": "error", "error": f"No existe el modelo: {args.model}"}, 1)
 
     os.makedirs(args.out_dir, exist_ok=True)
     base = args.job_id or os.path.splitext(os.path.basename(video))[0]
     out_video = os.path.abspath(os.path.join(args.out_dir, f"{base}_pose.mp4"))
     out_csv = os.path.abspath(os.path.join(args.out_dir, f"{base}_landmarks.csv"))
+    out_npz = os.path.abspath(os.path.join(args.out_dir, f"{base}_landmarks.npz"))
 
     try:
         exercise = load_exercise(args.exercise)
 
-        log("1/3 Extrayendo landmarks...")
-        with PoseExtractor(args.model) as extractor:
-            lm, tiempos, fps, size, info = extract_landmarks(video, extractor)
+        if args.desde_landmarks:
+            log("1/3 Cargando landmarks guardados (sin MediaPipe)...")
+            d = np.load(args.desde_landmarks, allow_pickle=False)
+            lm, tiempos, fps = d["landmarks"], d["tiempos"], float(d["fps"])
+            size, info = tuple(int(v) for v in d["size"]), json.loads(str(d["info"]))
+        else:
+            log("1/3 Extrayendo landmarks...")
+            from biometra.pose import PoseExtractor          # solo se importa cuando hace falta (MediaPipe es pesado)
+            with PoseExtractor(args.model) as extractor:
+                lm, tiempos, fps, size, info = extract_landmarks(video, extractor)
+        if args.guardar_landmarks:
+            np.savez_compressed(out_npz, landmarks=lm, tiempos=tiempos, fps=fps, size=np.array(size),
+                                info=json.dumps(info))
 
         con_persona = float((~np.isnan(lm[:, 0, 0])).mean())
         if con_persona < 0.3:
@@ -86,20 +118,23 @@ def main():
             f"Ángulo de cámara recomendado: {exercise.camera}.",
             "Los umbrales de conteo y feedback son aproximados y deben validarse con casos reales.",
         ]
+        advertencias += exercise.cfg.get("advertencias_extra", [])
         if con_persona < 0.8:
             advertencias.append("La persona no se detectó en todo el video; el análisis puede ser parcial.")
 
-        emit({
+        payload = {
             "estado": "completado",
             "video": video,
             "video_procesado": out_video,
             "video_procesado_h264": h264,
             "datos": out_csv if args.csv else None,
+            "landmarks_npz": out_npz if args.guardar_landmarks else None,
             "analisis": {
                 "ejercicio": exercise.key,
                 "fps": round(fps, 2),
                 "video_info": info,
                 "titulo": exercise.title,
+                "metricas_clave": exercise.cfg.get("overlay", []),
                 "puntuacion": analysis.score,
                 "metricas": analysis.metrics,
                 "tipo": exercise.cfg.get("tipo", "repeticiones"),
@@ -108,7 +143,13 @@ def main():
                 "feedback": analysis.feedback,
                 "advertencias": advertencias,
             },
-        })
+        }
+        if args.informe:
+            ruta = os.path.join(args.out_dir, f"{base}_informe.html")
+            informe.escribir_informe(payload, ruta)
+            print("\n" + informe.resumen_texto(payload) + "\n", file=sys.stderr)
+            log(f"Informe con video: {ruta}")
+        emit(payload)
     except SystemExit:
         raise
     except Exception as e:

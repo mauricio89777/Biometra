@@ -1,0 +1,190 @@
+{
+  "key": "elevaciones_laterales",
+  "title": "Elevaciones laterales",
+  "camera": "frontal",
+  "rep": {
+    "signal": "elevacion",
+    "direction": "peak",
+    "rest": 20,
+    "target": 80,
+    "hysteresis": 10,
+    "min_duration_s": 0.8,
+    "min_swing": 45
+  },
+  "metrics": {
+    "elev_izq": {
+      "label": "Elev izq",
+      "type": "lean",
+      "points": [
+        "izq_elbow",
+        "izq_shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    },
+    "elev_der": {
+      "label": "Elev der",
+      "type": "lean",
+      "points": [
+        "der_elbow",
+        "der_shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    },
+    "elevacion": {
+      "label": "Elevacion",
+      "type": "derived",
+      "op": "mean",
+      "from": [
+        "elev_izq",
+        "elev_der"
+      ],
+      "unidad": "deg"
+    },
+    "asimetria": {
+      "label": "Asimetria",
+      "type": "derived",
+      "op": "absdiff",
+      "from": [
+        "elev_izq",
+        "elev_der"
+      ],
+      "unidad": "deg"
+    },
+    "dif_brazos": {
+      "label": "Izq - der",
+      "type": "derived",
+      "op": "diff",
+      "from": [
+        "elev_izq",
+        "elev_der"
+      ],
+      "unidad": "deg"
+    },
+    "codo_izq": {
+      "label": "Codo izq",
+      "type": "angle",
+      "points": [
+        "izq_shoulder",
+        "izq_elbow",
+        "izq_wrist"
+      ],
+      "unidad": "deg"
+    },
+    "codo_der": {
+      "label": "Codo der",
+      "type": "angle",
+      "points": [
+        "der_shoulder",
+        "der_elbow",
+        "der_wrist"
+      ],
+      "unidad": "deg"
+    },
+    "codo": {
+      "label": "Codo",
+      "type": "derived",
+      "op": "min",
+      "from": [
+        "codo_izq",
+        "codo_der"
+      ],
+      "unidad": "deg"
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    }
+  },
+  "overlay": [
+    "elevacion",
+    "asimetria"
+  ],
+  "rules": [
+    {
+      "codigo": "recorrido_incompleto",
+      "nivel": "aviso",
+      "metric": "elevacion",
+      "stat": "max",
+      "op": "<",
+      "value": "target",
+      "peso": 25,
+      "mensaje": "No llegas a la altura del hombro en {n_rep} (rep. {reps}): en la peor, los brazos solo subieron hasta {valor:.0f}° respecto a la vertical (objetivo ≥ {umbral:.0f}°).",
+      "correccion": "Sube hasta que los brazos queden paralelos al suelo, liderando con los codos. Si no llegas, reduce el peso."
+    },
+    {
+      "codigo": "exceso_altura",
+      "nivel": "aviso",
+      "metric": "elevacion",
+      "stat": "max",
+      "op": ">",
+      "value": 105,
+      "peso": 15,
+      "mensaje": "Subes por encima de la altura del hombro en {reps_txt}: llegaste a {valor:.0f}° (tolerancia {umbral:.0f}°).",
+      "correccion": "Detente cuando los brazos estén paralelos al suelo: por encima, el trapecio toma el protagonismo y se pierde el trabajo del deltoides medio."
+    },
+    {
+      "codigo": "asimetria",
+      "nivel": "aviso",
+      "metric": "asimetria",
+      "stat": "en_fondo",
+      "op": ">",
+      "value": 15,
+      "peso": 20,
+      "mensaje": "Los brazos no suben igual en {reps_txt}: diferencia de {valor:.0f}° en el punto más alto (tolerancia {umbral:.0f}°).",
+      "correccion": "Sube los dos brazos a la vez y a la misma altura; si uno queda más bajo, usa una mancuerna algo más ligera o revisa si compensas con el tronco."
+    },
+    {
+      "codigo": "balanceo_tronco",
+      "nivel": "aviso",
+      "metric": "tronco",
+      "stat": "rango",
+      "op": ">",
+      "value": 6,
+      "peso": 15,
+      "mensaje": "Inclinas el tronco hacia un lado para subir en {reps_txt}: se movió {valor:.0f}° durante la repetición (tolerancia {umbral:.0f}°).",
+      "correccion": "Mantén el tronco recto y quieto; si tienes que balancearte, la mancuerna pesa demasiado."
+    },
+    {
+      "codigo": "brazos_muy_flexionados",
+      "nivel": "info",
+      "metric": "codo",
+      "stat": "min",
+      "op": "<",
+      "value": 120,
+      "peso": 5,
+      "mensaje": "Flexionas bastante los codos en {reps_txt}: hasta {valor:.0f}° (referencia ≥ {umbral:.0f}°).",
+      "correccion": "Mantén los codos ligeramente flexionados y casi fijos; si los flexionas mucho, el ejercicio se acorta y cambia."
+    },
+    {
+      "codigo": "bajada_rapida",
+      "nivel": "info",
+      "metric": "fase_vuelta_s",
+      "op": "<",
+      "value": 0.6,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Dejas caer los brazos en {n_rep} (rep. {reps}): bajada de {valor:.1f} s en la peor.",
+      "correccion": "Baja de forma controlada (unos 2 segundos): la fase de bajada también trabaja el deltoides."
+    }
+  ],
+  "consistencia": {
+    "metric": "elevacion",
+    "stat": "max",
+    "max_std": 10,
+    "mensaje": "La altura de la subida varía bastante entre repeticiones (desviación de {valor:.0f}°).",
+    "correccion": "Intenta subir siempre hasta la misma altura; si te cansas, termina la serie."
+  },
+  "advertencias_extra": [
+    "De frente solo se ve la inclinación lateral del tronco: el balanceo hacia delante y atrás (el impulso más habitual) no se puede medir. Para eso haría falta una cámara lateral."
+  ],
+  "mensaje_ok": "Buenas elevaciones laterales según lo medible de frente: recorrido completo, simetría entre brazos y tronco quieto.",
+  "mensaje_ok_con_notas": "Recorrido, simetría y tronco correctos; revisa las observaciones informativas."
+}
