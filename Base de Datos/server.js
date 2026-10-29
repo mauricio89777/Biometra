@@ -18,7 +18,7 @@ app.use(express.json());
 
 // Ruta de prueba rápida
 app.get('/', (req, res) => {
-  res.json({ mensaje: 'API OpenGYM funcionando' });
+  res.json({ mensaje: 'API Biometra funcionando' });
 });
 
 // ============================================
@@ -51,7 +51,7 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, (err) => {
   if (err) return;
-  console.log(`Servidor OpenGYM corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor Biometra corriendo en http://localhost:${PORT}`);
 });
 
 server.on('error', (err) => {

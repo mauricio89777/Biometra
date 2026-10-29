@@ -1,0 +1,127 @@
+{
+  "key": "sentadilla",
+  "title": "Sentadilla",
+  "camera": "lateral",
+  "rep": {
+    "signal": "rodilla",
+    "direction": "valley",
+    "rest": 160,
+    "target": 110,
+    "hysteresis": 8,
+    "min_duration_s": 0.8,
+    "min_swing": 40
+  },
+  "metrics": {
+    "rodilla": {
+      "label": "Rodilla",
+      "type": "angle",
+      "points": [
+        "hip",
+        "knee",
+        "ankle"
+      ],
+      "unidad": "deg"
+    },
+    "cadera": {
+      "label": "Cadera",
+      "type": "angle",
+      "points": [
+        "shoulder",
+        "hip",
+        "knee"
+      ],
+      "unidad": "deg"
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    },
+    "avance_rodilla": {
+      "label": "Rodilla vs punta",
+      "type": "forward_offset",
+      "points": [
+        "knee",
+        "ankle",
+        "heel",
+        "foot_index"
+      ],
+      "decimales": 2
+    }
+  },
+  "overlay": [
+    "rodilla",
+    "tronco"
+  ],
+  "rules": [
+    {
+      "codigo": "profundidad",
+      "nivel": "aviso",
+      "metric": "rodilla",
+      "stat": "min",
+      "op": ">",
+      "value": "target",
+      "peso": 30,
+      "mensaje": "Profundidad limitada en {n} de {total} repeticiones (rep. {reps}): en la peor, la rodilla solo llegó a {valor:.0f}° (objetivo ≤ {umbral:.0f}°).",
+      "correccion": "Baja hasta que los muslos queden aproximadamente paralelos al suelo. Si no puedes sin perder la postura, reduce el peso y trabaja la movilidad de cadera y tobillo."
+    },
+    {
+      "codigo": "inclinacion_tronco",
+      "nivel": "aviso",
+      "metric": "tronco",
+      "stat": "en_fondo",
+      "op": ">",
+      "value": 55,
+      "peso": 25,
+      "mensaje": "Inclinación excesiva del tronco hacia delante en {n_rep} (rep. {reps}): hasta {valor:.0f}° respecto a la vertical en el punto más bajo (referencia ≤ {umbral:.0f}°).",
+      "correccion": "Mantén el pecho alto y la mirada al frente, aprieta el abdomen antes de bajar y reparte el peso en todo el pie. Si persiste, reduce el peso."
+    },
+    {
+      "codigo": "bajada_rapida",
+      "nivel": "info",
+      "metric": "fase_ida_s",
+      "op": "<",
+      "value": 0.8,
+      "peso": 10,
+      "mensaje": "Bajada muy rápida en {n_rep} (rep. {reps}): {valor:.1f} s en la peor.",
+      "correccion": "Controla la bajada (en torno a 2 segundos) para mantener la tensión y evitar rebotes en el fondo."
+    },
+    {
+      "codigo": "rodillas_adelante",
+      "nivel": "info",
+      "metric": "avance_rodilla",
+      "stat": "max",
+      "op": ">",
+      "value": 0.1,
+      "peso": 5,
+      "mensaje": "En {reps_txt} las rodillas superan claramente la punta del pie (valor {valor:.2f}; referencia ≤ {umbral:.2f}).",
+      "correccion": "No es un error por sí mismo si los talones siguen apoyados, pero revisa la movilidad de tobillo y que el peso no se vaya a la punta del pie."
+    }
+  ],
+  "consistencia": {
+    "metric": "rodilla",
+    "stat": "min",
+    "max_std": 12,
+    "mensaje": "La profundidad varía bastante entre repeticiones (desviación de {valor:.0f}°).",
+    "correccion": "Usa una referencia (banco o cajón) para bajar siempre a la misma altura."
+  },
+  "mensaje_ok": "Buena sentadilla según lo medible de perfil: profundidad e inclinación del tronco correctas.",
+  "mensaje_ok_con_notas": "Profundidad e inclinación del tronco correctas; revisa las observaciones informativas.",
+  "coherencia": {
+    "metric": "cadera",
+    "extremo": "min",
+    "max_diff": 15,
+    "mensaje": "No se evaluó técnicamente {reps_txt}: las mediciones del cuerpo no son coherentes entre sí (posible fallo de seguimiento, p. ej. al inicio del video, por objetos que tapan el cuerpo o poca luz)."
+  },
+  "colocacion": {
+    "metric": "rodilla",
+    "stat": "min",
+    "min_diff": 25,
+    "mensaje": "Se ignoró {reps_txt}: parece un movimiento de colocación o recogida de la barra (mucho menos profundo que el resto de la serie), no una repetición de trabajo."
+  }
+}

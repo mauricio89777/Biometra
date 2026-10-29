@@ -1,0 +1,155 @@
+{
+  "key": "plancha",
+  "title": "Plancha",
+  "tipo": "isometrico",
+  "camera": "lateral",
+  "metrics": {
+    "alineacion": {
+      "label": "Cadera vs linea",
+      "type": "line_offset",
+      "points": [
+        "shoulder",
+        "hip",
+        "ankle"
+      ],
+      "decimales": 2
+    },
+    "inclinacion": {
+      "label": "Inclinacion cuerpo",
+      "type": "lean",
+      "points": [
+        "ankle",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    }
+  },
+  "posicion": {
+    "metric": "inclinacion",
+    "min": 55,
+    "max": 125
+  },
+  "hold": {
+    "min_duracion_s": 3,
+    "hueco_max_s": 0.5,
+    "recorte_inicio_s": 1.0,
+    "recorte_fin_s": 0.5
+  },
+  "linea_tiempo": {
+    "metric": "alineacion",
+    "bajo": -0.08,
+    "alto": 0.15,
+    "ventana_s": 5
+  },
+  "rules": [
+    {
+      "codigo": "cadera_caida",
+      "nivel": "aviso",
+      "metric": "alineacion",
+      "stat": "pct_bajo",
+      "limite": -0.08,
+      "op": ">",
+      "value": 0.2,
+      "peso": 35,
+      "mensaje": "La cadera queda hundida por debajo de la línea del cuerpo durante el {valor:.0%} del tiempo (tolerancia {umbral:.0%}); el punto más bajo fue a los {momento:.1f} s.",
+      "correccion": "Aprieta glúteos y abdomen, mete ligeramente la pelvis y empuja el suelo con antebrazos o manos. Si no puedes mantenerlo, acorta la serie o apoya las rodillas."
+    },
+    {
+      "codigo": "cadera_alta",
+      "nivel": "aviso",
+      "metric": "alineacion",
+      "stat": "pct_sobre",
+      "limite": 0.15,
+      "op": ">",
+      "value": 0.2,
+      "peso": 25,
+      "mensaje": "La cadera queda demasiado elevada sobre la línea del cuerpo durante el {valor:.0%} del tiempo (tolerancia {umbral:.0%}); el punto más alto fue a los {momento:.1f} s.",
+      "correccion": "Baja la cadera hasta alinearla con hombros y tobillos; el cuerpo debe formar una línea recta."
+    },
+    {
+      "codigo": "hundimiento_momentaneo",
+      "nivel": "aviso",
+      "metric": "alineacion",
+      "stat": "episodios_bajo",
+      "limite": -0.06,
+      "duracion_min_s": 0.4,
+      "op": ">",
+      "value": 0,
+      "peso": 15,
+      "si_no": [
+        "cadera_caida"
+      ],
+      "mensaje": "Perdiste la alineación hundiendo la cadera {veces} (a los {momentos}) respecto a tu postura habitual durante la plancha.",
+      "correccion": "Mantén abdomen y glúteos apretados todo el tiempo; si notas que la cadera cae, corrígela enseguida o termina la serie.",
+      "limite_abs": -0.04
+    },
+    {
+      "codigo": "elevacion_momentanea",
+      "nivel": "aviso",
+      "metric": "alineacion",
+      "stat": "episodios_sobre",
+      "limite": 0.08,
+      "duracion_min_s": 0.4,
+      "op": ">",
+      "value": 0,
+      "peso": 10,
+      "si_no": [
+        "cadera_alta"
+      ],
+      "mensaje": "Elevaste la cadera fuera de la línea del cuerpo {veces} (a los {momentos}) respecto a tu postura habitual durante la plancha.",
+      "correccion": "Mantén la cadera alineada con hombros y tobillos; si la subes para descansar, es señal de que conviene terminar la serie.",
+      "limite_abs": 0.04
+    },
+    {
+      "codigo": "deriva_hundimiento",
+      "nivel": "info",
+      "metric": "alineacion",
+      "stat": "deriva",
+      "op": "<",
+      "value": -0.05,
+      "peso": 10,
+      "mensaje": "La cadera se va hundiendo con el tiempo (cambio de {valor:.2f} entre el inicio y el final): señal de fatiga.",
+      "correccion": "Termina la serie cuando notes que pierdes la alineación; es mejor una plancha más corta y bien hecha."
+    },
+    {
+      "codigo": "deriva_elevacion",
+      "nivel": "info",
+      "metric": "alineacion",
+      "stat": "deriva",
+      "op": ">",
+      "value": 0.05,
+      "peso": 10,
+      "mensaje": "La cadera se va elevando con el tiempo (cambio de {valor:.2f} entre el inicio y el final).",
+      "correccion": "Si la elevas para descansar, es señal de fatiga: acorta la serie y mantén la línea recta."
+    },
+    {
+      "codigo": "inestabilidad",
+      "nivel": "info",
+      "metric": "alineacion",
+      "stat": "rango",
+      "op": ">",
+      "value": 0.12,
+      "peso": 10,
+      "mensaje": "La postura varió bastante durante la plancha (rango de {valor:.2f} en la alineación).",
+      "correccion": "Busca una posición estable, respira con calma y evita mover la cadera.",
+      "si_no": [
+        "hundimiento_momentaneo",
+        "elevacion_momentanea"
+      ]
+    },
+    {
+      "codigo": "duracion_corta",
+      "nivel": "info",
+      "metric": "duracion_s",
+      "stat": "duracion_s",
+      "op": "<",
+      "value": 15,
+      "peso": 0,
+      "mensaje": "Mantuviste la plancha {valor:.0f} s.",
+      "correccion": "Aumenta el tiempo poco a poco (5 a 10 s por semana) manteniendo siempre la alineación."
+    }
+  ],
+  "mensaje_ok": "Plancha estable según lo medible de perfil: cuerpo alineado y sin deriva durante el tiempo.",
+  "mensaje_ok_con_notas": "Alineación correcta; revisa las observaciones informativas."
+}

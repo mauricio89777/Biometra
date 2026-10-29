@@ -1,0 +1,115 @@
+{
+  "key": "crunch_abdominal",
+  "title": "Crunch abdominal",
+  "camera": "lateral",
+  "rep": {
+    "signal": "elevacion",
+    "direction": "peak",
+    "rest": 8,
+    "target": 20,
+    "hysteresis": 6,
+    "min_duration_s": 0.6,
+    "min_swing": 15
+  },
+  "metrics": {
+    "elevacion": {
+      "label": "Elevacion",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": [
+        "absolute",
+        "desde_horizontal",
+        "sobre_base"
+      ],
+      "unidad": "deg"
+    },
+    "cuello": {
+      "label": "Cuello",
+      "type": "angle",
+      "points": [
+        "hip",
+        "shoulder",
+        "ear"
+      ],
+      "unidad": "deg",
+      "vis_min": 0.4
+    }
+  },
+  "overlay": [
+    "elevacion",
+    "cuello"
+  ],
+  "rules": [
+    {
+      "codigo": "recorrido_incompleto",
+      "nivel": "aviso",
+      "metric": "elevacion",
+      "stat": "max",
+      "op": "<",
+      "value": "target",
+      "peso": 25,
+      "mensaje": "Recorrido corto en {n_rep} (rep. {reps}): en la peor, el tronco solo se elevó {valor:.0f}° sobre el suelo (objetivo ≥ {umbral:.0f}°).",
+      "correccion": "Eleva los hombros del suelo contrayendo el abdomen (unos 20 a 30°), sin tirar del cuello. Si no llegas, haz menos repeticiones pero con buen recorrido."
+    },
+    {
+      "codigo": "cuello_flexionado",
+      "nivel": "aviso",
+      "metric": "cuello",
+      "stat": "min",
+      "op": "<",
+      "value": 125,
+      "peso": 15,
+      "mensaje": "Posible tirón del cuello en {reps_txt}: el ángulo cabeza-tronco bajó hasta {valor:.0f}° (referencia ≥ {umbral:.0f}°).",
+      "correccion": "Mira al techo, deja un espacio como de un puño entre la barbilla y el pecho y sube con el abdomen, no con las manos en la nuca."
+    },
+    {
+      "codigo": "abdominal_completa",
+      "nivel": "info",
+      "metric": "elevacion",
+      "stat": "max",
+      "op": ">",
+      "value": 55,
+      "peso": 0,
+      "mensaje": "En {reps_txt} subes tanto (hasta {valor:.0f}°) que el movimiento se parece a una abdominal completa, que trabaja más los flexores de la cadera.",
+      "correccion": "Para trabajar el recto abdominal basta con elevar los hombros unos 20 a 30°."
+    },
+    {
+      "codigo": "subida_rapida",
+      "nivel": "info",
+      "metric": "fase_ida_s",
+      "op": "<",
+      "value": 0.5,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Subes con impulso en {n_rep} (rep. {reps}): {valor:.1f} s en la peor.",
+      "correccion": "Sube de forma controlada (1 a 2 segundos) contrayendo el abdomen."
+    },
+    {
+      "codigo": "bajada_rapida",
+      "nivel": "info",
+      "metric": "fase_vuelta_s",
+      "op": "<",
+      "value": 0.6,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Dejas caer el tronco en {n_rep} (rep. {reps}): bajada de {valor:.1f} s en la peor.",
+      "correccion": "Baja despacio (unos 2 segundos): la fase de bajada también trabaja el abdomen."
+    }
+  ],
+  "consistencia": {
+    "metric": "elevacion",
+    "stat": "max",
+    "max_std": 8,
+    "mensaje": "La altura de la subida varía bastante entre repeticiones (desviación de {valor:.0f}°).",
+    "correccion": "Intenta subir siempre hasta la misma altura; si te cansas, termina la serie."
+  },
+  "advertencias_extra": [
+    "No se mide la activación del abdomen ni la curvatura lumbar: solo el recorrido aparente del tronco.",
+    "Tumbado, el modelo de pose es menos estable: hombro, cadera y oreja pueden saltar. El filtro de confianza avisa si faltan datos."
+  ],
+  "mensaje_ok": "Buen crunch según lo medible de perfil: recorrido completo, cuello neutro y ritmo controlado.",
+  "mensaje_ok_con_notas": "Recorrido y cuello correctos; revisa las observaciones informativas."
+}

@@ -1,0 +1,109 @@
+{
+  "key": "triceps_polea",
+  "title": "Extension de triceps en polea",
+  "camera": "lateral",
+  "lado": "movimiento",
+  "rep": {
+    "signal": "codo",
+    "direction": "peak",
+    "rest": 100,
+    "target": 160,
+    "hysteresis": 12,
+    "min_duration_s": 0.6,
+    "min_swing": 45
+  },
+  "metrics": {
+    "codo": {
+      "label": "Codo",
+      "type": "angle",
+      "points": [
+        "shoulder",
+        "elbow",
+        "wrist"
+      ],
+      "unidad": "deg"
+    },
+    "brazo": {
+      "label": "Brazo vs vertical",
+      "type": "lean",
+      "points": [
+        "elbow",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    }
+  },
+  "overlay": [
+    "codo",
+    "brazo"
+  ],
+  "rules": [
+    {
+      "codigo": "extension_incompleta",
+      "nivel": "aviso",
+      "metric": "codo",
+      "stat": "max",
+      "op": "<",
+      "value": "target",
+      "peso": 25,
+      "mensaje": "No extiendes del todo los codos abajo en {n_rep} (rep. {reps}): en la peor, solo {valor:.0f}° (objetivo ≥ {umbral:.0f}°).",
+      "correccion": "Empuja hasta estirar los codos del todo abajo y aprieta el tríceps un instante antes de subir."
+    },
+    {
+      "codigo": "codo_se_mueve",
+      "nivel": "aviso",
+      "metric": "brazo",
+      "stat": "rango",
+      "op": ">",
+      "value": 12,
+      "peso": 25,
+      "mensaje": "Los codos se mueven en {reps_txt}: el brazo se desplazó {valor:.0f}° durante la repetición (tolerancia {umbral:.0f}°).",
+      "correccion": "Mantén los codos pegados al cuerpo y fijos; solo debe moverse el antebrazo. Si se te van, el peso es demasiado alto."
+    },
+    {
+      "codigo": "tronco_inestable",
+      "nivel": "aviso",
+      "metric": "tronco",
+      "stat": "rango",
+      "op": ">",
+      "value": 8,
+      "peso": 20,
+      "mensaje": "Inclinas o balanceas el tronco para empujar en {reps_txt}: se movió {valor:.0f}° durante la repetición (tolerancia {umbral:.0f}°).",
+      "correccion": "Mantén el tronco fijo: puedes inclinarte un poco hacia delante, pero sin cambiar de ángulo al empujar ni usar el peso del cuerpo para bajar la barra."
+    },
+    {
+      "codigo": "subida_rapida",
+      "nivel": "info",
+      "metric": "fase_vuelta_s",
+      "op": "<",
+      "value": 0.6,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Dejas subir la barra de golpe en {n_rep} (rep. {reps}): subida de {valor:.1f} s en la peor.",
+      "correccion": "Controla la subida (unos 2 segundos): la fase excéntrica también trabaja el tríceps."
+    }
+  ],
+  "consistencia": {
+    "metric": "codo",
+    "stat": "max",
+    "max_std": 8,
+    "mensaje": "La extensión varía bastante entre repeticiones (desviación de {valor:.0f}° abajo).",
+    "correccion": "Intenta llegar siempre a la misma extensión; si te cansas, termina la serie."
+  },
+  "advertencias_extra": [
+    "No se mide la posición de las muñecas ni el encogimiento del hombro. Si se ven los dos brazos, el análisis elige el que más se mueve."
+  ],
+  "mensaje_ok": "Buena extensión de tríceps según lo medible de perfil: extensión completa, codos fijos y tronco estable.",
+  "mensaje_ok_con_notas": "Extensión, codos y tronco correctos; revisa las observaciones informativas."
+}

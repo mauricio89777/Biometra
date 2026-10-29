@@ -5,7 +5,37 @@ const path = require('path');
 const { error } = require('console');
 
 
+//endpoint para listar ejereccion de python
+exports.listarEjercicios = (req, res) => {
+  const pythonPath = path.join(__dirname, '../../Analisis/venv/bin/python');
+  const scriptPath = path.join(__dirname, '../../Analisis/main.py');
 
+  const proceso = spawn(pythonPath, [scriptPath, '--listar']);
+  let salida = '';
+  let errores = '';
+
+  proceso.stdout.on('data', (data) => { salida += data.toString(); });
+  proceso.stderr.on('data', (data) => { errores += data.toString(); });
+
+  proceso.on('close', (codigo) => {
+    if (codigo !== 0) {
+      return res.status(500).json({ estado: 'error', error: errores || 'No se pudo obtener la lista de ejercicios' });
+    }
+    try {
+      const resultado = JSON.parse(salida);
+      return res.json(resultado);
+    } catch (e) {
+      return res.status(500).json({ estado: 'error', error: 'Python no devolvió un JSON válido al listar', salida });
+    }
+  });
+};
+
+
+
+
+
+
+//se instalo multer para recibir archivos multipart/form data
 exports.crear = async (req, res) => {
   try {
     const video = await prisma.video.create({ data: req.body });
@@ -55,8 +85,21 @@ exports.eliminar = async (req, res) => {
 };
 
 
-//conenctando con python
-exports.analizar = (req, res) => {
+// conectando con python
+//realizando cambios dejar por si acaso
+//exports.analizar = (req, res) => {
+
+  // Comprobar que Multer recibió el video
+  if (!req.file) {
+    return res.status(400).json({
+      estado: 'error',
+      error: 'No se recibió ningún video'
+    });
+  }
+
+  // Ruta del video que acaba de subir el usuario
+  const videoPath = req.file.path;
+
   const pythonPath = path.join(
     __dirname,
     '../../Analisis/venv/bin/python'
@@ -67,10 +110,8 @@ exports.analizar = (req, res) => {
     '../../Analisis/main.py'
   );
 
-  const videoPath = path.join(
-    __dirname,
-    '../../Analisis/videos/press_banca.mp4'
-  );
+  console.log('[UPLOAD] Video recibido:');
+  console.log(videoPath);
 
   console.log('[PYTHON] Ejecutando análisis...');
 
@@ -96,6 +137,7 @@ exports.analizar = (req, res) => {
   });
 
   proceso.on('close', (codigo) => {
+
     console.log(
       `[PYTHON] Proceso terminado con código ${codigo}`
     );
@@ -112,6 +154,99 @@ exports.analizar = (req, res) => {
 
       return res.json(resultado);
 
+    } catch (error) {
+      return res.status(500).json({
+        estado: 'error',
+        error: 'Python no devolvió un JSON válido',
+        salida
+      });
+    }
+  });
+//};
+
+
+
+
+
+exports.analizar = (req, res) => {
+  // 1. Comprobar que Multer recibió el video
+  if (!req.file) {
+    return res.status(400).json({
+      estado: 'error',
+      error: 'No se recibió ningún video'
+    });
+  }
+
+  // 2. Extraer el ejercicio enviado desde el frontend (FormData)
+  const { exercise } = req.body;
+  if (!exercise) {
+    return res.status(400).json({
+      estado: 'error',
+      error: 'Falta especificar el parámetro "exercise"'
+    });
+  }
+
+  // Ruta del video que acaba de subir el usuario
+  const videoPath = req.file.path;
+  const jobId = `job_${Date.now()}`;
+
+  const pythonPath = path.join(
+    __dirname,
+    '../../Analisis/venv/bin/python'
+  );
+
+  const scriptPath = path.join(
+    __dirname,
+    '../../Analisis/main.py'
+  );
+
+  console.log('[UPLOAD] Video recibido:');
+  console.log(videoPath);
+  console.log(`[PYTHON] Ejecutando análisis para el ejercicio: ${exercise}`);
+
+  // 3. Pasar el argumento --exercise y el job-id a Python
+  const args = [
+    scriptPath,
+    videoPath,
+    '--exercise',
+    exercise,
+    '--job-id',
+    jobId,
+    '--informe' // Genera automáticamente el HTML de reporte si lo deseas
+  ];
+
+  const proceso = spawn(pythonPath, args);
+
+  let salida = '';
+  let errores = '';
+
+  proceso.stdout.on('data', (data) => {
+    salida += data.toString();
+  });
+
+  proceso.stderr.on('data', (data) => {
+    errores += data.toString();
+    console.log(
+      '[PYTHON DEBUG]',
+      data.toString().trim()
+    );
+  });
+
+  proceso.on('close', (codigo) => {
+    console.log(
+      `[PYTHON] Proceso terminado con código ${codigo}`
+    );
+
+    if (codigo !== 0) {
+      return res.status(500).json({
+        estado: 'error',
+        error: errores || 'Python terminó con un error'
+      });
+    }
+
+    try {
+      const resultado = JSON.parse(salida);
+      return res.json(resultado);
     } catch (error) {
       return res.status(500).json({
         estado: 'error',
