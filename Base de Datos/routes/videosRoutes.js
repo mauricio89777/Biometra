@@ -23,6 +23,9 @@ const upload = multer({ storage });
 //Ruta para obter los diferentes ejercicios 
 router.get('/ejercicios', controller.listarEjercicios);
 
+//ruta para trasmitir resultados python
+router.get('/stream', controller.streamVideo);
+
 router.get('/', controller.listar);
 router.get('/:id', controller.obtener);
 

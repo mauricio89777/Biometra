@@ -4,11 +4,15 @@ const { spawn } = require('child_process'); // lo usaremos para python
 const path = require('path');
 const { error } = require('console');
 
+//para los informes
+const fs = require('fs');
+
+//se instalo multer para recibir archivos multipart/form data
 
 //endpoint para listar ejereccion de python
 exports.listarEjercicios = (req, res) => {
-  const pythonPath = path.join(__dirname, '../../Analisis/venv/bin/python');
-  const scriptPath = path.join(__dirname, '../../Analisis/main.py');
+  const pythonPath = path.join(__dirname, '../../analisis/venv/bin/python');
+  const scriptPath = path.join(__dirname, '../../analisis/main.py');
 
   const proceso = spawn(pythonPath, [scriptPath, '--listar']);
   let salida = '';
@@ -31,7 +35,17 @@ exports.listarEjercicios = (req, res) => {
 };
 
 
+// NUEVO: Endpoint para transmitir o servir el video procesado por Python
+exports.streamVideo = (req, res) => {
+  const videoPath = req.query.path;
 
+  if (!videoPath || !fs.existsSync(videoPath)) {
+    return res.status(404).json({ error: 'Video procesado no encontrado en el servidor' });
+  }
+
+  // Enviar el archivo de video al cliente
+  res.sendFile(path.resolve(videoPath));
+};
 
 
 
@@ -85,91 +99,11 @@ exports.eliminar = async (req, res) => {
 };
 
 
-// conectando con python
-//realizando cambios dejar por si acaso
-//exports.analizar = (req, res) => {
-
-  // Comprobar que Multer recibió el video
-  if (!req.file) {
-    return res.status(400).json({
-      estado: 'error',
-      error: 'No se recibió ningún video'
-    });
-  }
-
-  // Ruta del video que acaba de subir el usuario
-  const videoPath = req.file.path;
-
-  const pythonPath = path.join(
-    __dirname,
-    '../../Analisis/venv/bin/python'
-  );
-
-  const scriptPath = path.join(
-    __dirname,
-    '../../Analisis/main.py'
-  );
-
-  console.log('[UPLOAD] Video recibido:');
-  console.log(videoPath);
-
-  console.log('[PYTHON] Ejecutando análisis...');
-
-  const proceso = spawn(
-    pythonPath,
-    [scriptPath, videoPath]
-  );
-
-  let salida = '';
-  let errores = '';
-
-  proceso.stdout.on('data', (data) => {
-    salida += data.toString();
-  });
-
-  proceso.stderr.on('data', (data) => {
-    errores += data.toString();
-
-    console.log(
-      '[PYTHON DEBUG]',
-      data.toString().trim()
-    );
-  });
-
-  proceso.on('close', (codigo) => {
-
-    console.log(
-      `[PYTHON] Proceso terminado con código ${codigo}`
-    );
-
-    if (codigo !== 0) {
-      return res.status(500).json({
-        estado: 'error',
-        error: errores || 'Python terminó con un error'
-      });
-    }
-
-    try {
-      const resultado = JSON.parse(salida);
-
-      return res.json(resultado);
-
-    } catch (error) {
-      return res.status(500).json({
-        estado: 'error',
-        error: 'Python no devolvió un JSON válido',
-        salida
-      });
-    }
-  });
-//};
-
-
 
 
 
 exports.analizar = (req, res) => {
-  // 1. Comprobar que Multer recibió el video
+  // 1. Validar que Multer recibió el video
   if (!req.file) {
     return res.status(400).json({
       estado: 'error',
@@ -177,7 +111,7 @@ exports.analizar = (req, res) => {
     });
   }
 
-  // 2. Extraer el ejercicio enviado desde el frontend (FormData)
+  // 2. Obtener la clave del ejercicio que envió React (ej: "press_militar", "sentadilla", etc.)
   const { exercise } = req.body;
   if (!exercise) {
     return res.status(400).json({
@@ -186,25 +120,25 @@ exports.analizar = (req, res) => {
     });
   }
 
-  // Ruta del video que acaba de subir el usuario
+  // Ruta del video subido temporalmente por Multer
   const videoPath = req.file.path;
   const jobId = `job_${Date.now()}`;
 
   const pythonPath = path.join(
     __dirname,
-    '../../Analisis/venv/bin/python'
+    '../../analisis/venv/bin/python'
   );
 
   const scriptPath = path.join(
     __dirname,
-    '../../Analisis/main.py'
+    '../../analisis/main.py'
   );
 
-  console.log('[UPLOAD] Video recibido:');
-  console.log(videoPath);
+  console.log('[UPLOAD] Video recibido en:', videoPath);
   console.log(`[PYTHON] Ejecutando análisis para el ejercicio: ${exercise}`);
 
-  // 3. Pasar el argumento --exercise y el job-id a Python
+  // 3. Pasamos únicamente el video y el ejercicio seleccionado a Python
+  // (Python se encargará internamente de usar su carpeta output y sus rutas)
   const args = [
     scriptPath,
     videoPath,
@@ -212,7 +146,7 @@ exports.analizar = (req, res) => {
     exercise,
     '--job-id',
     jobId,
-    '--informe' // Genera automáticamente el HTML de reporte si lo deseas
+    '--informe' // Si genera el informe html/salida en output
   ];
 
   const proceso = spawn(pythonPath, args);
@@ -226,16 +160,11 @@ exports.analizar = (req, res) => {
 
   proceso.stderr.on('data', (data) => {
     errores += data.toString();
-    console.log(
-      '[PYTHON DEBUG]',
-      data.toString().trim()
-    );
+    console.log('[PYTHON DEBUG]', data.toString().trim());
   });
 
   proceso.on('close', (codigo) => {
-    console.log(
-      `[PYTHON] Proceso terminado con código ${codigo}`
-    );
+    console.log(`[PYTHON] Proceso terminado con código ${codigo}`);
 
     if (codigo !== 0) {
       return res.status(500).json({
@@ -245,6 +174,7 @@ exports.analizar = (req, res) => {
     }
 
     try {
+      // Python imprime SOLO un JSON final por stdout
       const resultado = JSON.parse(salida);
       return res.json(resultado);
     } catch (error) {
