@@ -125,30 +125,30 @@ export default function App() {
         </div>
       </section>
 
-      {/* SECCIÓN SOBRE NOSOTROS */}
-      <section className="about-section">
-        <div className="about-card">
-          <h2 className="section-title">💡 Sobre Nosotros</h2>
-          <p className="about-text">
-            En <strong>Biometra</strong> combinamos las ciencias del deporte, la biomecánica clínica y el procesamiento de imagen en tiempo real para brindarle a atletas, entrenadores y entusiastas del fitness un diagnóstico preciso de cada repetición. Nuestra misión es democratizar el entrenamiento biomecánico de élite en todo Chile.
-          </p>
+     {/* SECCIÓN SOBRE NOSOTROS Y CREADORES */}
+<section className="about-section">
+  <div className="about-card">
+    <h2 className="section-title">💡 Sobre Nosotros</h2>
+    <p className="about-text">
+      <strong>Biometra</strong> fue concebida y desarrollada por un equipo multidisciplinario apasionado por la tecnología, las ciencias del deporte y la ingeniería de software. Nuestro objetivo es llevar herramientas de nivel profesional de análisis cinemático y biomecánico a atletas, entrenadores y centros deportivos en todo Chile.
+    </p>
 
-          <div className="about-grid">
-            <div className="about-item">
-              <h4>🎯 Precisión Cinemática</h4>
-              <p>Monitoreo continuo de ángulos articulares y rango de movimiento (ROM) mediante visión por computadora avanzada.</p>
-            </div>
-            <div className="about-item">
-              <h4>🛡️ Prevención de Lesiones</h4>
-              <p>Detección temprana de compensaciones musculares y desacoples posturales en ejercicios de alta intensidad.</p>
-            </div>
-            <div className="about-item">
-              <h4>🌐 Red de Sedes Oficiales</h4>
-              <p>Integración con las principales cadenas de gimnasios del país para un seguimiento continuo dentro y fuera del centro de entrenamiento.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+    <div className="about-grid">
+      <div className="about-item">
+        <h4>👨‍💻 Equipo de Desarrollo</h4>
+        <p>Especialistas en ingeniería de software y visión por computadora encargados del modelado de estimación postural y procesamiento en tiempo real.</p>
+      </div>
+      <div className="about-item">
+        <h4>🏃‍♂️ Asesoría Biomecánica</h4>
+        <p>Profesionales de la actividad física y ciencias del deporte enfocados en la validación de ángulos articulares y prevención de lesiones.</p>
+      </div>
+      <div className="about-item">
+        <h4>🚀 Misión & Visión</h4>
+        <p>Democratizar el acceso a métricas de alto rendimiento y potenciar el seguimiento entre entrenadores y clientes de manera intuitiva.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* FOOTER */}
       <footer className="footer">
