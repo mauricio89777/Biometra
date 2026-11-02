@@ -102,7 +102,7 @@ npm run dev
 ```
 
 
-Configurar el entorno de Python
+6. Configurar el entorno de Python
 
 Linux (Manjaro):
 ```bash
@@ -123,7 +123,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-6. Descargar el modelo de MediaPipe
+7. Descargar el modelo de MediaPipe
 
 Descargar el modelo pose_landmarker_full.task y  heavy colocarlo en:
 
@@ -131,7 +131,7 @@ analisis/models/pose_landmarker_full.task
 analisis/models/pose_landmarker_heavy.task
 
 
-7. Instalar FFmpeg
+8. Instalar FFmpeg
 
 FFmpeg se utiliza para procesar los videos y generar archivos de salida compatibles con navegadores web.
 
@@ -144,6 +144,9 @@ Windows:
 Descargar FFmpeg desde su sitio oficial:
 
 https://ffmpeg.org/download.html
+
+
+
 
 
 
