@@ -82,9 +82,11 @@ https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker
 3. inicia el backend
 ### Backend
 ```bash
-cd Backend
+cd Backend(Base de datos si es una version antigua)
 npm ci
 node server.js
+crear arhivo .env
+crear la carpeta uploads/originales (para almacenar videos)
 ```
 
 4. Generar Prisma client y aplicar las migraciones existentes
