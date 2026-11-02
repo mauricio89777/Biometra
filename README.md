@@ -55,7 +55,7 @@ El proyecto se desarrolla utilizando la metodología ágil Scrum, organizando el
 ## Requerimientos previa
 
 - Node.js y npm.
-- Python 3.
+- Python 3.14.7 (version del proyecto)
 - MySQL Server o MariaDB.
 - FFmpeg.
 - Git.
