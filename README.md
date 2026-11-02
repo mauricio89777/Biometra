@@ -145,8 +145,7 @@ Descargar FFmpeg desde su sitio oficial:
 
 https://ffmpeg.org/download.html
 
-
-
+Configurar la carpeta bin de FFmpeg en la variable de entorno PATH de Windows.
 
 
 
@@ -192,5 +191,4 @@ Biometra/
 └── README.md
 ```
 
-Configurar la carpeta bin de FFmpeg en la variable de entorno PATH de Windows.-Metodología Scrum
 
