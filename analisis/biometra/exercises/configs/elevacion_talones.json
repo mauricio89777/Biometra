@@ -1,0 +1,124 @@
+{
+  "key": "elevacion_talones",
+  "title": "Elevacion de talones",
+  "camera": "lateral",
+  "rep": {
+    "signal": "talon",
+    "direction": "peak",
+    "rest": 0.02,
+    "target": 0.06,
+    "hysteresis": 0.015,
+    "min_duration_s": 0.6,
+    "min_swing": 0.04
+  },
+  "metrics": {
+    "talon": {
+      "label": "Talon",
+      "type": "heel_rise",
+      "points": [
+        "heel",
+        "foot_index",
+        "hip",
+        "knee",
+        "ankle"
+      ],
+      "mode": "sobre_base",
+      "decimales": 3,
+      "vis_min": 0.4
+    },
+    "flexion_plantar": {
+      "label": "Flexion plantar",
+      "type": "angle",
+      "points": [
+        "knee",
+        "ankle",
+        "foot_index"
+      ],
+      "mode": "sobre_base",
+      "unidad": "deg",
+      "vis_min": 0.4
+    },
+    "rodilla": {
+      "label": "Rodilla",
+      "type": "angle",
+      "points": [
+        "hip",
+        "knee",
+        "ankle"
+      ],
+      "unidad": "deg"
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    }
+  },
+  "overlay": [
+    "talon",
+    "tronco"
+  ],
+  "rules": [
+    {
+      "codigo": "recorrido_incompleto",
+      "nivel": "aviso",
+      "metric": "talon",
+      "stat": "max",
+      "op": "<",
+      "value": "target",
+      "peso": 25,
+      "mensaje": "No subes del todo en {n_rep} (rep. {reps}): en la peor, el talón solo subió un {valor:.1%} de la longitud de tu pierna (objetivo ≥ {umbral:.1%}).",
+      "correccion": "Sube lo más alto que puedas, hasta quedar sobre la punta de los pies, y mantén un instante arriba."
+    },
+    {
+      "codigo": "rodillas_flexionadas",
+      "nivel": "aviso",
+      "metric": "rodilla",
+      "stat": "min",
+      "op": "<",
+      "value": 160,
+      "peso": 20,
+      "mensaje": "Flexionas las rodillas durante el movimiento en {reps_txt}: bajaron hasta {valor:.0f}° (referencia ≥ {umbral:.0f}°).",
+      "correccion": "Mantén las rodillas casi extendidas y mueve solo los tobillos; si las flexionas, la sentadilla ayuda a subir y resta trabajo al gemelo."
+    },
+    {
+      "codigo": "balanceo_tronco",
+      "nivel": "aviso",
+      "metric": "tronco",
+      "stat": "rango",
+      "op": ">",
+      "value": 6,
+      "peso": 15,
+      "mensaje": "Balanceas el tronco para subir en {reps_txt}: se movió {valor:.0f}° durante la repetición (tolerancia {umbral:.0f}°).",
+      "correccion": "Mantén el cuerpo recto y quieto; apóyate suavemente en algo para el equilibrio si lo necesitas, pero sin impulsarte."
+    },
+    {
+      "codigo": "bajada_rapida",
+      "nivel": "info",
+      "metric": "fase_vuelta_s",
+      "op": "<",
+      "value": 0.6,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Dejas caer los talones en {n_rep} (rep. {reps}): bajada de {valor:.1f} s en la peor.",
+      "correccion": "Baja de forma controlada (unos 2 segundos): la fase de bajada también trabaja gemelos y sóleo."
+    }
+  ],
+  "consistencia": {
+    "metric": "talon",
+    "stat": "max",
+    "max_std": 0.03,
+    "mensaje": "La altura de la subida varía bastante entre repeticiones (desviación de {valor:.1%} de la longitud de la pierna).",
+    "correccion": "Intenta subir siempre a la misma altura; si te cansas, termina la serie."
+  },
+  "advertencias_extra": [
+    "El talón y la punta del pie son los puntos menos estables del modelo de pose. Si el seguimiento falla, prueba el modelo pesado, más luz y un calzado que contraste con el suelo."
+  ],
+  "mensaje_ok": "Buena elevación de talones según lo medible de perfil: recorrido completo, rodillas extendidas y tronco quieto.",
+  "mensaje_ok_con_notas": "Recorrido, rodillas y tronco correctos; revisa las observaciones informativas."
+}

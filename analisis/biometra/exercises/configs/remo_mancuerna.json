@@ -1,0 +1,132 @@
+{
+  "key": "remo_mancuerna",
+  "title": "Remo con mancuerna",
+  "camera": "lateral",
+  "lado": "movimiento",
+  "rep": {
+    "signal": "brazo",
+    "direction": "peak",
+    "rest": 20,
+    "target": 55,
+    "hysteresis": 12,
+    "min_duration_s": 0.8,
+    "min_swing": 30
+  },
+  "metrics": {
+    "brazo": {
+      "label": "Brazo vs vertical",
+      "type": "lean",
+      "points": [
+        "elbow",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    },
+    "codo": {
+      "label": "Codo",
+      "type": "angle",
+      "points": [
+        "shoulder",
+        "elbow",
+        "wrist"
+      ],
+      "unidad": "deg"
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    }
+  },
+  "overlay": [
+    "brazo",
+    "tronco"
+  ],
+  "rules": [
+    {
+      "codigo": "recorrido_incompleto",
+      "nivel": "aviso",
+      "metric": "brazo",
+      "stat": "max",
+      "op": "<",
+      "value": "target",
+      "peso": 25,
+      "mensaje": "No llevas el codo lo bastante atrás en {n_rep} (rep. {reps}): en la peor, el brazo solo subió {valor:.0f}° respecto a la vertical (objetivo ≥ {umbral:.0f}°).",
+      "correccion": "Tira del codo hacia la cadera, como arrancando una sierra, hasta que quede a la altura del torso o algo más arriba."
+    },
+    {
+      "codigo": "tronco_inestable",
+      "nivel": "aviso",
+      "metric": "tronco",
+      "stat": "rango",
+      "op": ">",
+      "value": 8,
+      "peso": 25,
+      "mensaje": "El tronco se mueve para ayudar a subir la mancuerna en {reps_txt}: {valor:.0f}° durante la repetición (tolerancia {umbral:.0f}°).",
+      "correccion": "Mantén la espalda recta y fija, apoyando bien la mano libre; si el tronco gira o sube, el peso es demasiado alto."
+    },
+    {
+      "codigo": "tronco_erguido",
+      "nivel": "info",
+      "metric": "tronco",
+      "stat": "min",
+      "op": "<",
+      "value": 30,
+      "peso": 5,
+      "mensaje": "El tronco queda muy erguido en {reps_txt}: {valor:.0f}° respecto a la vertical (referencia ≥ {umbral:.0f}°).",
+      "correccion": "Inclina el tronco hacia delante (casi paralelo al suelo) para que trabaje la espalda y no el trapecio superior."
+    },
+    {
+      "codigo": "extension_incompleta",
+      "nivel": "info",
+      "metric": "codo",
+      "stat": "max",
+      "op": "<",
+      "value": 160,
+      "peso": 5,
+      "mensaje": "No extiendes del todo el brazo abajo en {n_rep} (rep. {reps}): hasta {valor:.0f}° (referencia ≥ {umbral:.0f}°).",
+      "correccion": "Baja hasta extender el codo para estirar bien el dorsal."
+    },
+    {
+      "codigo": "subida_rapida",
+      "nivel": "info",
+      "metric": "fase_ida_s",
+      "op": "<",
+      "value": 0.4,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Tiras con mucho impulso en {n_rep} (rep. {reps}): subida de {valor:.1f} s en la peor.",
+      "correccion": "Sube de forma controlada (en torno a 1 segundo) y aprieta la espalda arriba."
+    },
+    {
+      "codigo": "bajada_rapida",
+      "nivel": "info",
+      "metric": "fase_vuelta_s",
+      "op": "<",
+      "value": 0.6,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Dejas caer la mancuerna en {n_rep} (rep. {reps}): bajada de {valor:.1f} s en la peor.",
+      "correccion": "Baja de forma controlada (unos 2 segundos) para trabajar también la fase excéntrica."
+    }
+  ],
+  "consistencia": {
+    "metric": "brazo",
+    "stat": "max",
+    "max_std": 10,
+    "mensaje": "El recorrido del codo varía bastante entre repeticiones (desviación de {valor:.0f}°).",
+    "correccion": "Intenta llevar siempre el codo a la misma altura; si te cansas, termina la serie."
+  },
+  "advertencias_extra": [
+    "Graba con el brazo que trabaja del lado de la cámara; si se ven los dos, el análisis elige el que más se mueve.",
+    "No se mide la rotación del tronco (de perfil casi no se ve) ni el encogimiento del hombro."
+  ],
+  "mensaje_ok": "Buen remo según lo medible de perfil: el codo llega atrás, el tronco queda quieto y el ritmo es controlado.",
+  "mensaje_ok_con_notas": "Recorrido y tronco correctos; revisa las observaciones informativas."
+}
