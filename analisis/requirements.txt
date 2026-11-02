@@ -1,4 +1,14 @@
-mediapipe
-opencv-python
-numpy
+# Biometra dependencias del análisis biomecánico
+
+# que se utilizo:
+
+# Detección y seguimiento de pose
+mediapipe==1.1.0
+# Procesamiento de imágenes y video
+opencv-contrib-python==5.0.0.93
+# Operaciones matemáticas y matrices
+numpy==2.5.4
+
+# Requisito externo:
 # ffmpeg debe estar instalado en el sistema (para generar H.264 reproducible en navegador)
+# Se utiliza para generar videos H.264 reproducibles en navegadores.
