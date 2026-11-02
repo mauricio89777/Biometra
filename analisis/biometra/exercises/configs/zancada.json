@@ -1,0 +1,207 @@
+{
+  "key": "zancada",
+  "title": "Zancada",
+  "camera": "lateral",
+  "rep": {
+    "signal": "rodilla",
+    "direction": "valley",
+    "rest": 150,
+    "target": 100,
+    "hysteresis": 8,
+    "min_duration_s": 0.8,
+    "min_swing": 40
+  },
+  "metrics": {
+    "rodilla_izq": {
+      "label": "Rodilla izq",
+      "type": "angle",
+      "points": [
+        "izq_hip",
+        "izq_knee",
+        "izq_ankle"
+      ],
+      "unidad": "deg"
+    },
+    "rodilla_der": {
+      "label": "Rodilla der",
+      "type": "angle",
+      "points": [
+        "der_hip",
+        "der_knee",
+        "der_ankle"
+      ],
+      "unidad": "deg"
+    },
+    "rodilla": {
+      "label": "Rodilla",
+      "type": "derived",
+      "op": "min",
+      "from": [
+        "rodilla_izq",
+        "rodilla_der"
+      ],
+      "unidad": "deg"
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    },
+    "paso": {
+      "label": "Paso",
+      "type": "distance_ratio",
+      "points": [
+        "izq_ankle",
+        "der_ankle",
+        "hip",
+        "knee",
+        "ankle"
+      ],
+      "decimales": 2
+    },
+    "inclinacion_tibia": {
+      "label": "Espinilla delantera",
+      "type": "shin_forward",
+      "points": [
+        "izq_knee",
+        "izq_ankle",
+        "der_knee",
+        "der_ankle",
+        "heel",
+        "foot_index"
+      ],
+      "unidad": "deg"
+    },
+    "tobillo_adelante": {
+      "label": "Tobillo vs cadera",
+      "type": "ankle_ahead",
+      "points": [
+        "hip",
+        "knee",
+        "ankle",
+        "heel",
+        "foot_index"
+      ],
+      "decimales": 2
+    }
+  },
+  "overlay": [
+    "rodilla",
+    "tronco"
+  ],
+  "rules": [
+    {
+      "codigo": "profundidad",
+      "nivel": "aviso",
+      "metric": "rodilla",
+      "stat": "min",
+      "op": ">",
+      "value": "target",
+      "peso": 30,
+      "mensaje": "Profundidad limitada en {n} de {total} repeticiones con la pierna visible delante (rep. {reps}): en la peor, la rodilla delantera solo llegó a {valor:.0f}° (objetivo ≤ {umbral:.0f}°).",
+      "correccion": "Baja hasta que las rodillas formen aproximadamente 90° y la rodilla trasera quede cerca del suelo, sin perder el equilibrio. Si no puedes, reduce el recorrido solo mientras trabajas la movilidad y la fuerza.",
+      "cuando": {
+        "rol": [
+          "delantera",
+          "indeterminado"
+        ]
+      }
+    },
+    {
+      "codigo": "profundidad_trasera",
+      "nivel": "aviso",
+      "metric": "rodilla",
+      "stat": "min",
+      "op": ">",
+      "value": 120,
+      "peso": 15,
+      "cuando": {
+        "rol": [
+          "trasera"
+        ]
+      },
+      "mensaje": "La rodilla de la pierna trasera casi no se flexionó en {reps_txt} (hasta {valor:.0f}°; referencia ≤ {umbral:.0f}°).",
+      "correccion": "Deja caer la rodilla trasera hacia el suelo manteniendo el torso erguido."
+    },
+    {
+      "codigo": "inclinacion_tronco",
+      "nivel": "aviso",
+      "metric": "tronco",
+      "stat": "en_fondo",
+      "op": ">",
+      "value": 30,
+      "peso": 20,
+      "mensaje": "Tronco inclinado hacia delante en {reps_txt}: hasta {valor:.0f}° respecto a la vertical en el punto más bajo (referencia ≤ {umbral:.0f}°).",
+      "correccion": "Mantén el pecho alto y el tronco erguido, mira al frente y aprieta el abdomen. Si te inclinas, suele ser señal de un paso demasiado corto o de falta de fuerza o movilidad."
+    },
+    {
+      "codigo": "paso_corto",
+      "nivel": "aviso",
+      "metric": "paso",
+      "stat": "en_fondo",
+      "op": "<",
+      "value": 0.75,
+      "peso": 15,
+      "mensaje": "Paso corto en {reps_txt}: la separación entre los pies fue {valor:.2f} veces la longitud de tu pierna (referencia ≥ {umbral:.2f}).",
+      "correccion": "Da un paso más largo para que la espinilla delantera quede casi vertical al bajar y la rodilla no se adelante demasiado."
+    },
+    {
+      "codigo": "paso_largo",
+      "nivel": "aviso",
+      "metric": "paso",
+      "stat": "en_fondo",
+      "op": ">",
+      "value": 1.35,
+      "peso": 10,
+      "mensaje": "Paso muy largo en {reps_txt}: la separación entre los pies fue {valor:.2f} veces la longitud de tu pierna (referencia ≤ {umbral:.2f}).",
+      "correccion": "Acorta el paso hasta que ambas rodillas lleguen a unos 90° abajo; un paso excesivo limita la profundidad y dificulta volver."
+    },
+    {
+      "codigo": "rodilla_adelantada",
+      "nivel": "info",
+      "metric": "inclinacion_tibia",
+      "stat": "max",
+      "op": ">",
+      "value": 35,
+      "peso": 5,
+      "mensaje": "En {reps_txt} la espinilla de la pierna delantera se inclinó {valor:.0f}° hacia delante (referencia ≤ {umbral:.0f}°): la rodilla pasó claramente la punta del pie.",
+      "correccion": "No es un error por sí mismo si el talón sigue apoyado, pero suele indicar un paso corto; un paso algo más largo deja la espinilla casi vertical."
+    },
+    {
+      "codigo": "bajada_rapida",
+      "nivel": "info",
+      "metric": "fase_ida_s",
+      "op": "<",
+      "value": 0.6,
+      "peso": 5,
+      "mensaje": "Bajada muy rápida en {n_rep} (rep. {reps}): {valor:.1f} s en la peor.",
+      "correccion": "Controla la bajada (en torno a 1,5 a 2 segundos) para mantener la tensión y proteger la rodilla.",
+      "solo_completas": true
+    }
+  ],
+  "consistencia": {
+    "metric": "rodilla",
+    "stat": "min",
+    "max_std": 12,
+    "mensaje": "La profundidad de la rodilla delantera varía bastante entre repeticiones (desviación de {valor:.0f}°).",
+    "correccion": "Intenta bajar siempre a la misma altura; una referencia (banco o cajón) detrás ayuda.",
+    "cuando": {
+      "rol": [
+        "delantera",
+        "indeterminado"
+      ]
+    }
+  },
+  "mensaje_ok": "Buena zancada según lo medible de perfil: profundidad, tronco y longitud del paso correctos.",
+  "mensaje_ok_con_notas": "Profundidad, tronco y paso correctos; revisa las observaciones informativas.",
+  "consejo_sin_datos": "Para evaluar el paso y la espinilla delantera hace falta ver las dos piernas: graba en diagonal (unos 45°).",
+  "rol": {
+    "metric": "tobillo_adelante",
+    "umbral": 0.15
+  }
+}

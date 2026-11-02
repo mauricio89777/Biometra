@@ -1,0 +1,105 @@
+{
+  "key": "flexiones",
+  "title": "Flexiones",
+  "camera": "lateral",
+  "rep": {
+    "signal": "codo",
+    "direction": "valley",
+    "rest": 155,
+    "target": 100,
+    "hysteresis": 8,
+    "min_duration_s": 0.5,
+    "min_swing": 35
+  },
+  "metrics": {
+    "codo": {
+      "label": "Codo",
+      "type": "angle",
+      "points": [
+        "shoulder",
+        "elbow",
+        "wrist"
+      ],
+      "unidad": "deg"
+    },
+    "alineacion": {
+      "label": "Cadera vs linea",
+      "type": "line_offset",
+      "points": [
+        "shoulder",
+        "hip",
+        "ankle"
+      ],
+      "decimales": 2
+    }
+  },
+  "overlay": [
+    "codo",
+    "alineacion"
+  ],
+  "rules": [
+    {
+      "codigo": "profundidad",
+      "nivel": "aviso",
+      "metric": "codo",
+      "stat": "min",
+      "op": ">",
+      "value": "target",
+      "peso": 30,
+      "mensaje": "Profundidad limitada en {n} de {total} repeticiones (rep. {reps}): en la peor, el codo solo flexionó hasta {valor:.0f}° (objetivo ≤ {umbral:.0f}°).",
+      "correccion": "Baja el pecho hasta quedar a pocos centímetros del suelo, con los codos en torno a 90°. Si no puedes con el recorrido completo, usa la variante con rodillas o con las manos elevadas en lugar de recortar el movimiento."
+    },
+    {
+      "codigo": "extension_incompleta",
+      "nivel": "aviso",
+      "metric": "codo",
+      "stat": "max",
+      "op": "<",
+      "value": 160,
+      "peso": 15,
+      "mensaje": "Extensión de brazos incompleta arriba en {n} repeticiones (rep. {reps}): en la peor, solo {valor:.0f}° (referencia ≥ {umbral:.0f}°).",
+      "correccion": "Termina cada repetición con los brazos casi extendidos, sin bloquear de golpe los codos."
+    },
+    {
+      "codigo": "cadera_caida",
+      "nivel": "aviso",
+      "metric": "alineacion",
+      "stat": "bajada_desde_fondo",
+      "op": ">",
+      "value": 0.05,
+      "peso": 25,
+      "mensaje": "La cadera se hunde por debajo de la línea del cuerpo en {reps_txt}: {valor:.2f} más que en el fondo (tolerancia {umbral:.2f}).",
+      "correccion": "Aprieta glúteos y abdomen para mantener el cuerpo recto como una tabla y sube el pecho y la cadera a la vez. Si no puedes sostenerlo, pasa a la variante con rodillas."
+    },
+    {
+      "codigo": "cadera_alta",
+      "nivel": "aviso",
+      "metric": "alineacion",
+      "stat": "subida_desde_fondo",
+      "op": ">",
+      "value": 0.12,
+      "peso": 20,
+      "mensaje": "La cadera se eleva por encima de la línea del cuerpo en {reps_txt}: sube {valor:.2f} respecto a su posición en el fondo (tolerancia {umbral:.2f}).",
+      "correccion": "Mantén la cadera alineada con hombros y tobillos durante todo el movimiento y empuja el suelo con todo el cuerpo a la vez."
+    },
+    {
+      "codigo": "bajada_rapida",
+      "nivel": "info",
+      "metric": "fase_ida_s",
+      "op": "<",
+      "value": 0.5,
+      "peso": 5,
+      "mensaje": "Bajada muy rápida en {n_rep} (rep. {reps}): {valor:.1f} s en la peor.",
+      "correccion": "Controla la bajada (1 a 2 segundos) para mantener la tensión y proteger los hombros."
+    }
+  ],
+  "consistencia": {
+    "metric": "codo",
+    "stat": "min",
+    "max_std": 12,
+    "mensaje": "La profundidad varía bastante entre repeticiones (desviación de {valor:.0f}°).",
+    "correccion": "Intenta bajar siempre hasta la misma altura; si te cansas, es mejor parar la serie."
+  },
+  "mensaje_ok": "Buenas flexiones según lo medible de perfil: profundidad, extensión y alineación del cuerpo correctas.",
+  "mensaje_ok_con_notas": "Profundidad y alineación correctas; revisa las observaciones informativas."
+}

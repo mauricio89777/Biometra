@@ -1,0 +1,116 @@
+{
+  "key": "curl_biceps",
+  "title": "Curl de biceps",
+  "camera": "lateral",
+  "rep": {
+    "signal": "codo",
+    "direction": "valley",
+    "rest": 150,
+    "target": 70,
+    "hysteresis": 8,
+    "min_duration_s": 0.8,
+    "min_swing": 45
+  },
+  "metrics": {
+    "codo": {
+      "label": "Codo",
+      "type": "angle",
+      "points": [
+        "shoulder",
+        "elbow",
+        "wrist"
+      ],
+      "unidad": "deg"
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    },
+    "brazo": {
+      "label": "Brazo vs vertical",
+      "type": "lean",
+      "points": [
+        "elbow",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    }
+  },
+  "overlay": [
+    "codo",
+    "tronco"
+  ],
+  "rules": [
+    {
+      "codigo": "flexion_incompleta",
+      "nivel": "aviso",
+      "metric": "codo",
+      "stat": "min",
+      "op": ">",
+      "value": "target",
+      "peso": 25,
+      "mensaje": "No llegas arriba del todo en {n_rep} (rep. {reps}): en la peor, el codo solo se flexionó hasta {valor:.0f}° (objetivo ≤ {umbral:.0f}°).",
+      "correccion": "Sube la mancuerna hasta que el antebrazo quede casi vertical, sin adelantar el codo. Si no puedes, reduce el peso."
+    },
+    {
+      "codigo": "balanceo_tronco",
+      "nivel": "aviso",
+      "metric": "tronco",
+      "stat": "rango",
+      "op": ">",
+      "value": 8,
+      "peso": 25,
+      "mensaje": "Balanceas el tronco para subir la mancuerna en {reps_txt}: el tronco se movió {valor:.0f}° durante la repetición (tolerancia {umbral:.0f}°).",
+      "correccion": "Mantén la espalda recta y fija, con glúteos y abdomen apretados. Si necesitas balancear, el peso es demasiado alto."
+    },
+    {
+      "codigo": "codo_adelantado",
+      "nivel": "aviso",
+      "metric": "brazo",
+      "stat": "max",
+      "op": ">",
+      "value": 30,
+      "peso": 20,
+      "mensaje": "El codo se adelanta o se separa del cuerpo en {reps_txt}: el brazo llegó a {valor:.0f}° respecto a la vertical (tolerancia {umbral:.0f}°).",
+      "correccion": "Mantén el codo pegado al costado y fijo; solo debe moverse el antebrazo."
+    },
+    {
+      "codigo": "extension_incompleta",
+      "nivel": "info",
+      "metric": "codo",
+      "stat": "max",
+      "op": "<",
+      "value": 160,
+      "peso": 5,
+      "mensaje": "No extiendes del todo el brazo abajo en {n_rep} (rep. {reps}): hasta {valor:.0f}° (referencia ≥ {umbral:.0f}°).",
+      "correccion": "Baja hasta casi extender el codo para trabajar todo el recorrido; mantener algo de tensión abajo es válido si es intencional."
+    },
+    {
+      "codigo": "bajada_rapida",
+      "nivel": "info",
+      "metric": "fase_vuelta_s",
+      "op": "<",
+      "value": 0.8,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Dejas caer la mancuerna en {n_rep} (rep. {reps}): bajada de {valor:.1f} s en la peor.",
+      "correccion": "Baja de forma controlada (unos 2 segundos); la fase de bajada también trabaja el bíceps."
+    }
+  ],
+  "consistencia": {
+    "metric": "codo",
+    "stat": "min",
+    "max_std": 12,
+    "mensaje": "El recorrido varía bastante entre repeticiones (desviación de {valor:.0f}° arriba).",
+    "correccion": "Intenta subir siempre hasta la misma altura; si te cansas, baja el peso o termina la serie."
+  },
+  "mensaje_ok": "Buen curl según lo medible de perfil: recorrido completo, tronco quieto y codo fijo.",
+  "mensaje_ok_con_notas": "Recorrido, tronco y codo correctos; revisa las observaciones informativas."
+}

@@ -1,0 +1,216 @@
+{
+  "key": "jalon_pecho",
+  "title": "Jalon al pecho",
+  "camera": "frontal (simetría de brazos) o lateral (inclinación del tronco); lo ideal es grabar una serie de cada",
+  "rep": {
+    "signal": "manos",
+    "direction": "peak",
+    "rest": -0.75,
+    "target": -0.05,
+    "hysteresis": 0.15,
+    "min_duration_s": 0.8,
+    "min_swing": 0.5,
+    "extension_window_s": 1.2
+  },
+  "metrics": {
+    "codo_izq": {
+      "label": "Codo izq",
+      "type": "angle",
+      "points": [
+        "izq_shoulder",
+        "izq_elbow",
+        "izq_wrist"
+      ],
+      "unidad": "deg"
+    },
+    "manos_izq": {
+      "label": "Mano izq",
+      "type": "vertical_gap",
+      "points": [
+        "izq_shoulder",
+        "izq_wrist",
+        "izq_shoulder",
+        "izq_hip"
+      ],
+      "decimales": 2
+    },
+    "codo_der": {
+      "label": "Codo der",
+      "type": "angle",
+      "points": [
+        "der_shoulder",
+        "der_elbow",
+        "der_wrist"
+      ],
+      "unidad": "deg"
+    },
+    "manos_der": {
+      "label": "Mano der",
+      "type": "vertical_gap",
+      "points": [
+        "der_shoulder",
+        "der_wrist",
+        "der_shoulder",
+        "der_hip"
+      ],
+      "decimales": 2
+    },
+    "codo": {
+      "label": "Codo",
+      "type": "derived",
+      "op": "mean",
+      "from": [
+        "codo_izq",
+        "codo_der"
+      ],
+      "unidad": "deg"
+    },
+    "manos": {
+      "label": "Manos",
+      "type": "derived",
+      "op": "mean",
+      "from": [
+        "manos_izq",
+        "manos_der"
+      ],
+      "decimales": 2
+    },
+    "asimetria_manos": {
+      "label": "Asimetria",
+      "type": "derived",
+      "op": "absdiff",
+      "from": [
+        "manos_izq",
+        "manos_der"
+      ],
+      "decimales": 2
+    },
+    "dif_manos": {
+      "label": "Izq - der",
+      "type": "derived",
+      "op": "diff",
+      "from": [
+        "manos_izq",
+        "manos_der"
+      ],
+      "decimales": 2
+    },
+    "tronco": {
+      "label": "Tronco",
+      "type": "lean",
+      "points": [
+        "hip",
+        "shoulder"
+      ],
+      "mode": "absolute",
+      "unidad": "deg"
+    }
+  },
+  "overlay": [
+    "manos",
+    "tronco"
+  ],
+  "rules": [
+    {
+      "codigo": "recorrido_incompleto",
+      "nivel": "aviso",
+      "metric": "manos",
+      "stat": "max",
+      "op": "<",
+      "value": "target",
+      "peso": 25,
+      "mensaje": "La barra no baja hasta el pecho en {n_rep} (rep. {reps}): en la peor, las manos quedaron en {valor:+.2f} longitudes de tronco respecto al hombro (0 = a su altura; objetivo ≥ {umbral:+.2f}).",
+      "correccion": "Baja la barra hasta la parte alta del pecho, llevando los codos hacia abajo y atrás. Si no llegas, reduce el peso."
+    },
+    {
+      "codigo": "codo_poco_flexionado",
+      "nivel": "aviso",
+      "metric": "codo",
+      "stat": "min",
+      "op": ">",
+      "value": 110,
+      "peso": 15,
+      "mensaje": "Casi no flexionas los codos en {reps_txt}: hasta {valor:.0f}° (referencia ≤ {umbral:.0f}°); parece un jalón con los brazos rectos.",
+      "correccion": "Dobla los codos al bajar la barra y llévalos hacia las costillas, para que trabaje el dorsal y no solo el hombro."
+    },
+    {
+      "codigo": "extension_incompleta",
+      "nivel": "info",
+      "metric": "codo",
+      "stat": "max",
+      "op": "<",
+      "value": 150,
+      "peso": 5,
+      "mensaje": "No extiendes del todo los brazos arriba en {n_rep} (rep. {reps}): {valor:.0f}° (referencia ≥ {umbral:.0f}°); pierdes el estiramiento del dorsal.",
+      "correccion": "Deja que los brazos se estiren arriba, con control y sin que los hombros se encojan."
+    },
+    {
+      "codigo": "tronco_hacia_atras",
+      "nivel": "aviso",
+      "metric": "tronco",
+      "stat": "max",
+      "op": ">",
+      "value": 30,
+      "peso": 20,
+      "mensaje": "Inclinas demasiado el tronco en {reps_txt}: {valor:.0f}° respecto a la vertical (tolerancia {umbral:.0f}°).",
+      "correccion": "Mantén el tronco casi vertical (una ligera inclinación hacia atrás es normal) y no te eches hacia atrás para bajar la barra."
+    },
+    {
+      "codigo": "balanceo_tronco",
+      "nivel": "aviso",
+      "metric": "tronco",
+      "stat": "rango",
+      "op": ">",
+      "value": 10,
+      "peso": 25,
+      "mensaje": "El tronco se balancea para ayudar a bajar la barra en {reps_txt}: {valor:.0f}° durante la repetición (tolerancia {umbral:.0f}°).",
+      "correccion": "Mantén el tronco fijo, con el abdomen apretado; si necesitas balancearte, el peso es demasiado alto."
+    },
+    {
+      "codigo": "asimetria",
+      "nivel": "aviso",
+      "metric": "asimetria_manos",
+      "stat": "en_fondo",
+      "op": ">",
+      "value": 0.15,
+      "peso": 20,
+      "mensaje": "Una mano baja más que la otra en {reps_txt}: diferencia de {valor:.2f} longitudes de tronco abajo (tolerancia {umbral:.2f}).",
+      "correccion": "Tira con los dos lados a la vez y a la misma altura; si uno va retrasado, usa un peso más ligero."
+    },
+    {
+      "codigo": "tiron_rapido",
+      "nivel": "info",
+      "metric": "fase_ida_s",
+      "op": "<",
+      "value": 0.4,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Tiras de la barra con mucho impulso en {n_rep} (rep. {reps}): {valor:.1f} s en la peor.",
+      "correccion": "Baja la barra de forma controlada (en torno a 1 segundo) y aprieta la espalda abajo."
+    },
+    {
+      "codigo": "subida_rapida",
+      "nivel": "info",
+      "metric": "fase_vuelta_s",
+      "op": "<",
+      "value": 0.6,
+      "peso": 5,
+      "solo_completas": true,
+      "mensaje": "Dejas subir la barra de golpe en {n_rep} (rep. {reps}): {valor:.1f} s en la peor.",
+      "correccion": "Controla la subida de la barra (unos 2 segundos); no dejes que el peso te estire de golpe."
+    }
+  ],
+  "consistencia": {
+    "metric": "manos",
+    "stat": "max",
+    "max_std": 0.15,
+    "mensaje": "La altura a la que llega la barra varía bastante entre repeticiones (desviación de {valor:.2f} longitudes de tronco).",
+    "correccion": "Intenta bajar siempre hasta el mismo punto del pecho; si te cansas, termina la serie."
+  },
+  "advertencias_extra": [
+    "La inclinación hacia atrás y el balanceo del tronco solo se miden bien de perfil; la simetría entre manos, solo de frente. Lo ideal es grabar una serie de cada.",
+    "No se detecta si la barra pasa por detrás de la nuca."
+  ],
+  "mensaje_ok": "Buen jalón según lo medible: la barra llega al pecho, los codos se flexionan y el tronco queda estable.",
+  "mensaje_ok_con_notas": "Recorrido, codos y tronco correctos; revisa las observaciones informativas."
+}

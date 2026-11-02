@@ -1,0 +1,26 @@
+{
+  "key": "press_militar",
+  "title": "Press militar",
+  "camera": "lateral",
+  "rep": {"signal": "codo", "direction": "valley", "rest": 155, "target": 110,
+          "hysteresis": 8, "min_duration_s": 0.5, "min_swing": 25},
+  "metrics": {
+    "codo":   {"label": "Codo",   "type": "angle", "points": ["shoulder", "elbow", "wrist"], "unidad": "deg"},
+    "tronco": {"label": "Tronco", "type": "lean",  "points": ["hip", "shoulder"], "mode": "deviation", "unidad": "deg"}
+  },
+  "overlay": ["codo", "tronco"],
+  "rules": [
+    {"codigo": "recorrido_incompleto", "nivel": "aviso", "metric": "codo", "stat": "min", "op": ">",
+     "value": "target", "peso": 25,
+     "mensaje": "Recorrido aparentemente incompleto en {n} de {total} repeticiones (rep. {reps}): en la peor, el codo solo bajó hasta {valor:.0f}° (objetivo ≤ {umbral:.0f}°).",
+     "correccion": "Baja la barra hasta la altura de los hombros o la clavícula antes de empujar de nuevo."},
+    {"codigo": "bloqueo_incompleto", "nivel": "aviso", "metric": "codo", "stat": "max", "op": "<",
+     "value": 165, "peso": 20,
+     "mensaje": "Extensión final de codo incompleta en {n_rep} (rep. {reps}): en la peor, solo {valor:.0f}° (referencia ≥ {umbral:.0f}°).",
+     "correccion": "Termina cada repetición con los brazos extendidos y la barra sobre la cabeza."},
+    {"codigo": "compensacion_tronco", "nivel": "aviso", "metric": "tronco", "stat": "max", "op": ">",
+     "value": 12, "peso": 25,
+     "mensaje": "Posible inclinación o arqueo del tronco en {reps_txt}: hasta {valor:.0f}° respecto a tu postura inicial (tolerancia {umbral:.0f}°).",
+     "correccion": "Aprieta abdomen y glúteos antes de empujar y mantén las costillas hacia abajo. Si no puedes, reduce el peso."}
+  ]
+}

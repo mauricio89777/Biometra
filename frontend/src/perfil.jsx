@@ -3,7 +3,74 @@ import React, { useState } from 'react';
 export const Perfil = ({ user, onLogout, onNavigate }) => {
   if (!user) return null;
 
-  const esEntrenador = user.role === 'entrenador' || user.rol === 'entrenador' || user.role === 'gimnasio';
+  const esAdmin = user.role === 'administrador' || user.rol === 'administrador';
+  const esEntrenador = user.role === 'entrenador' || user.rol === 'entrenador';
+
+  // -------------------------------------------------------------
+  // ESTADOS Y CRUD DE USUARIOS PARA ADMINISTRADOR
+  // -------------------------------------------------------------
+  const [listaUsuarios, setListaUsuarios] = useState([
+    { id: 1, nombre: 'Carlos Pérez', email: 'cliente@ejemplo.com', role: 'cliente', estado: 'Activo' },
+    { id: 2, nombre: 'Ana Gómez', email: 'ana.gomez@ejemplo.com', role: 'cliente', estado: 'Activo' },
+    { id: 3, nombre: 'Entrenador Marco', email: 'entrenador@ejemplo.com', role: 'entrenador', estado: 'Activo' },
+    { id: 4, nombre: 'Administrador General', email: 'admin@ejemplo.com', role: 'administrador', estado: 'Activo' }
+  ]);
+
+  const [busqueda, setBusqueda] = useState('');
+  const [usuarioEditando, setUsuarioEditando] = useState(null);
+  
+  // Estado para el formulario de Agregar / Editar usuario
+  const [formUsuario, setFormUsuario] = useState({
+    nombre: '',
+    email: '',
+    role: 'cliente',
+    estado: 'Activo'
+  });
+
+  // Función para Agregar o Actualizar Usuario
+  const handleGuardarUsuario = (e) => {
+    e.preventDefault();
+    if (!formUsuario.nombre.trim() || !formUsuario.email.trim()) return;
+
+    if (usuarioEditando) {
+      // Actualizar usuario existente
+      setListaUsuarios(listaUsuarios.map(u => 
+        u.id === usuarioEditando.id ? { ...u, ...formUsuario } : u
+      ));
+      setUsuarioEditando(null);
+    } else {
+      // Agregar nuevo usuario
+      const nuevo = {
+        id: Date.now(),
+        ...formUsuario
+      };
+      setListaUsuarios([...listaUsuarios, nuevo]);
+    }
+
+    setFormUsuario({ nombre: '', email: '', role: 'cliente', estado: 'Activo' });
+  };
+
+  const handleEditarClick = (u) => {
+    setUsuarioEditando(u);
+    setFormUsuario({ nombre: u.nombre, email: u.email, role: u.role, estado: u.estado });
+  };
+
+  const handleEliminarUsuario = (id) => {
+    if (window.confirm('¿Está seguro de que desea eliminar este usuario?')) {
+      setListaUsuarios(listaUsuarios.filter(u => u.id !== id));
+      if (usuarioEditando && usuarioEditando.id === id) {
+        setUsuarioEditando(null);
+        setFormUsuario({ nombre: '', email: '', role: 'cliente', estado: 'Activo' });
+      }
+    }
+  };
+
+  // Filtrado dinámico para Consultar Usuarios
+  const usuariosFiltrados = listaUsuarios.filter(u =>
+    u.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+    u.email.toLowerCase().includes(busqueda.toLowerCase()) ||
+    u.role.toLowerCase().includes(busqueda.toLowerCase())
+  );
 
   // -------------------------------------------------------------
   // ESTADOS Y DATOS PARA EL PERFIL DE CLIENTE
@@ -83,7 +150,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
   // -------------------------------------------------------------
   const [seccionEntrenador, setSeccionEntrenador] = useState('ejercicios');
 
-  // Clientes con rutinas asignadas
   const [clientesList, setClientesList] = useState([
     { 
       id: 1, 
@@ -107,19 +173,9 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
       rutinas: [
         { id: 201, ejercicio: 'Press Militar', series: '5x5', estado: 'Completado', fecha: 'Ayer' }
       ]
-    },
-    { 
-      id: 3, 
-      nombre: 'Lucía Fernández', 
-      plan: 'Rehabilitación', 
-      nivel: 'Principiante', 
-      progreso: '60%', 
-      asistencia: 'En riesgo',
-      rutinas: []
     }
   ]);
 
-  // Catálogo de Ejercicios
   const [catalogoEjercicios, setCatalogoEjercicios] = useState([
     { id: 1, nombre: 'Press de Pecho', grupo: 'Pecho', dificultad: 'Media' },
     { id: 2, nombre: 'Sentadilla Libre', grupo: 'Pierna', dificultad: 'Alta' },
@@ -127,17 +183,14 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
     { id: 4, nombre: 'Press Militar', grupo: 'Hombro', dificultad: 'Media' }
   ]);
 
-  // Formulario rápido de ejercicios
   const [nombreNuevoEx, setNombreNuevoEx] = useState('');
   const [grupoNuevoEx, setGrupoNuevoEx] = useState('Pecho');
   const [dificultadNuevoEx, setDificultadNuevoEx] = useState('Media');
 
-  // Modal de asignación a cliente
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [ejercicioAAsignar, setEjercicioAAsignar] = useState('');
   const [seriesAAsignar, setSeriesAAsignar] = useState('3x10');
 
-  // Plantillas prediseñadas rápidas para el entrenador
   const plantillasRapidas = [
     { nombre: 'Curl de Bíceps', grupo: 'Brazo', dificultad: 'Media' },
     { nombre: 'Peso Muerto', grupo: 'Pierna', dificultad: 'Alta' },
@@ -146,7 +199,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
     { nombre: 'Remo con Barra', grupo: 'Espalda', dificultad: 'Media' }
   ];
 
-  // Auto-completar plantilla al hacer clic en un botón rápido
   const seleccionarPlantilla = (p) => {
     setNombreNuevoEx(p.nombre);
     setGrupoNuevoEx(p.grupo);
@@ -172,7 +224,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
     setCatalogoEjercicios(catalogoEjercicios.filter(ex => ex.id !== id));
   };
 
-  // Asignar rutina a cliente
   const asignarNuevaRutina = (e) => {
     e.preventDefault();
     const ejercicioFinal = ejercicioAAsignar || (catalogoEjercicios[0] ? catalogoEjercicios[0].nombre : '');
@@ -231,12 +282,199 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
   });
 
   // -------------------------------------------------------------
-  // RENDERIZADO SI ES ENTRENADOR
+  // RENDERIZADO: PANEL DE ADMINISTRADOR
+  // -------------------------------------------------------------
+  if (esAdmin) {
+    return (
+      <div style={{ fontFamily: "'Inter', system-ui, sans-serif", backgroundColor: '#090D16', color: '#FFFFFF', minHeight: '100vh', paddingBottom: '60px' }}>
+        {/* NAVBAR ADMIN */}
+        <header style={{ backgroundColor: '#111827', borderBottom: '1px solid #1F2937', padding: '1rem 2rem', marginBottom: '25px' }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button onClick={() => onNavigate && onNavigate('home')} style={{ backgroundColor: '#1F2937', color: '#00FF87', border: '1px solid #00FF87', padding: '0.5rem 1.1rem', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>
+              ← Volver al Inicio
+            </button>
+            <span style={{ fontSize: '1.2rem', fontWeight: '900', color: '#FFFFFF' }}>⚙️ Panel de Administración</span>
+            <button onClick={onLogout} style={{ backgroundColor: '#DC2626', color: '#FFFFFF', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>
+              Cerrar Sesión
+            </button>
+          </div>
+        </header>
+
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 20px' }}>
+          {/* BANNER PRINCIPAL */}
+          <div style={{ backgroundColor: '#111827', borderRadius: '16px', border: '1px solid #38BDF8', padding: '1.8rem', marginBottom: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
+            <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#38BDF8', fontWeight: '900' }}>
+              Gestión Centralizada de Usuarios
+            </h1>
+            <p style={{ margin: '0.4rem 0 0 0', color: '#9CA3AF', fontSize: '0.95rem' }}>
+              Administra los accesos de la plataforma: consulta, crea, edita y elimina perfiles en tiempo real.
+            </p>
+          </div>
+
+          {/* FORMULARIO AGREGAR / EDITAR USUARIO */}
+          <div style={{ backgroundColor: '#111827', padding: '1.5rem', borderRadius: '14px', border: '1px solid #1F2937', marginBottom: '25px' }}>
+            <h3 style={{ margin: '0 0 1rem 0', color: usuarioEditando ? '#38BDF8' : '#00FF87', fontSize: '1.1rem', fontWeight: '800' }}>
+              {usuarioEditando ? `✏️ Editando Usuario: ${usuarioEditando.nombre}` : '➕ Registrar Nuevo Usuario'}
+            </h3>
+
+            <form onSubmit={handleGuardarUsuario} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Nombre Completo</label>
+                <input 
+                  type="text" 
+                  required 
+                  placeholder="Ej: Juan Pérez" 
+                  value={formUsuario.nombre} 
+                  onChange={(e) => setFormUsuario({ ...formUsuario, nombre: e.target.value })} 
+                  style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} 
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Correo Electrónico</label>
+                <input 
+                  type="email" 
+                  required 
+                  placeholder="usuario@biometra.cl" 
+                  value={formUsuario.email} 
+                  onChange={(e) => setFormUsuario({ ...formUsuario, email: e.target.value })} 
+                  style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} 
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Rol de Usuario</label>
+                <select 
+                  value={formUsuario.role} 
+                  onChange={(e) => setFormUsuario({ ...formUsuario, role: e.target.value })} 
+                  style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', fontWeight: '600' }}
+                >
+                  <option value="cliente">Cliente</option>
+                  <option value="entrenador">Entrenador</option>
+                  <option value="administrador">Administrador</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Estado</label>
+                <select 
+                  value={formUsuario.estado} 
+                  onChange={(e) => setFormUsuario({ ...formUsuario, estado: e.target.value })} 
+                  style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', fontWeight: '600' }}
+                >
+                  <option value="Activo">Activo</option>
+                  <option value="Inactivo">Inactivo</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button 
+                  type="submit" 
+                  style={{ flex: 1, padding: '0.7rem', backgroundColor: usuarioEditando ? '#38BDF8' : '#00FF87', color: '#090D16', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' }}
+                >
+                  {usuarioEditando ? 'Guardar Cambios' : 'Agregar Usuario'}
+                </button>
+                {usuarioEditando && (
+                  <button 
+                    type="button" 
+                    onClick={() => { setUsuarioEditando(null); setFormUsuario({ nombre: '', email: '', role: 'cliente', estado: 'Activo' }); }} 
+                    style={{ padding: '0.7rem 1rem', backgroundColor: '#374151', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          {/* TABLA DE CONSULTA Y GESTIÓN DE USUARIOS */}
+          <div style={{ backgroundColor: '#111827', padding: '1.5rem', borderRadius: '14px', border: '1px solid #1F2937' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '1rem' }}>
+              <h3 style={{ margin: 0, color: '#FFF', fontSize: '1.1rem', fontWeight: '800' }}>
+                📋 Usuarios Registrados ({usuariosFiltrados.length})
+              </h3>
+              <input 
+                type="text" 
+                placeholder="🔍 Consultar por nombre, correo o rol..." 
+                value={busqueda} 
+                onChange={(e) => setBusqueda(e.target.value)} 
+                style={{ width: '100%', maxWidth: '320px', padding: '0.65rem 1rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', outline: 'none' }} 
+              />
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #1F2937', color: '#38BDF8' }}>
+                    <th style={{ padding: '0.8rem' }}>Nombre</th>
+                    <th style={{ padding: '0.8rem' }}>Correo Electrónico</th>
+                    <th style={{ padding: '0.8rem' }}>Rol</th>
+                    <th style={{ padding: '0.8rem' }}>Estado</th>
+                    <th style={{ padding: '0.8rem', textAlign: 'center' }}>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usuariosFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#9CA3AF' }}>
+                        No se encontraron usuarios coincidentes.
+                      </td>
+                    </tr>
+                  ) : (
+                    usuariosFiltrados.map((u) => (
+                      <tr key={u.id} style={{ borderBottom: '1px solid #1F2937' }}>
+                        <td style={{ padding: '0.8rem', fontWeight: 'bold', color: '#FFF' }}>{u.nombre}</td>
+                        <td style={{ padding: '0.8rem', color: '#9CA3AF' }}>{u.email}</td>
+                        <td style={{ padding: '0.8rem' }}>
+                          <span style={{ 
+                            backgroundColor: u.role === 'administrador' ? 'rgba(56,189,248,0.15)' : u.role === 'entrenador' ? 'rgba(0,255,135,0.15)' : 'rgba(255,255,255,0.05)', 
+                            color: u.role === 'administrador' ? '#38BDF8' : u.role === 'entrenador' ? '#00FF87' : '#9CA3AF', 
+                            padding: '0.25rem 0.6rem', 
+                            borderRadius: '6px', 
+                            fontSize: '0.78rem', 
+                            fontWeight: 'bold',
+                            textTransform: 'capitalize'
+                          }}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.8rem' }}>
+                          <span style={{ color: u.estado === 'Activo' ? '#00FF87' : '#ef4444', fontWeight: 'bold' }}>
+                            ● {u.estado}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                          <button 
+                            onClick={() => handleEditarClick(u)} 
+                            style={{ backgroundColor: 'transparent', color: '#38BDF8', border: '1px solid #38BDF8', padding: '0.35rem 0.7rem', borderRadius: '6px', cursor: 'pointer', marginRight: '0.5rem', fontWeight: 'bold', fontSize: '0.8rem' }}
+                          >
+                            ✏️ Editar
+                          </button>
+                          <button 
+                            onClick={() => handleEliminarUsuario(u.id)} 
+                            style={{ backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', padding: '0.35rem 0.7rem', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}
+                          >
+                            🗑️ Eliminar
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // RENDERIZADO: PANEL DE ENTRENADOR
   // -------------------------------------------------------------
   if (esEntrenador) {
     return (
       <div style={{ fontFamily: "'Inter', system-ui, sans-serif", backgroundColor: '#090D16', color: '#FFFFFF', minHeight: '100vh', paddingBottom: '60px' }}>
-        {/* NAVBAR */}
         <header style={{ backgroundColor: '#111827', borderBottom: '1px solid #1F2937', padding: '1rem 2rem', marginBottom: '25px' }}>
           <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <button onClick={() => onNavigate && onNavigate('home')} style={{ backgroundColor: '#1F2937', color: '#00FF87', border: '1px solid #00FF87', padding: '0.5rem 1.1rem', borderRadius: '8px', fontWeight: '700', cursor: 'pointer' }}>
@@ -250,14 +488,13 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
         </header>
 
         <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 20px' }}>
-          {/* BANNER ENTRENADOR */}
           <div style={{ backgroundColor: '#111827', borderRadius: '20px', border: '1px solid #38BDF8', padding: '2rem', marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <h1 style={{ margin: 0, fontSize: '1.8rem', color: '#38BDF8', fontWeight: '900' }}>
-                👨‍🏫 {user.name || user.nombre || 'dede'}
+                👨‍🏫 {user.name || user.nombre || 'Entrenador Biometra'}
               </h1>
               <p style={{ margin: '0.4rem 0 0 0', color: '#9CA3AF', fontSize: '0.95rem' }}>
-                ✉️ {user.email || 'josa.vasquez@duocuc.cl'} | Rol: <span style={{ color: '#00FF87', fontWeight: 'bold' }}>Entrenador / Coach</span>
+                ✉️ {user.email || 'entrenador@ejemplo.com'} | Rol: <span style={{ color: '#00FF87', fontWeight: 'bold' }}>Entrenador / Coach</span>
               </p>
             </div>
             <div style={{ backgroundColor: '#090D16', padding: '0.8rem 1.2rem', borderRadius: '12px', border: '1px solid #1F2937', textAlign: 'center' }}>
@@ -266,7 +503,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
             </div>
           </div>
 
-          {/* BOTONES NAVEGACIÓN PESTAÑAS ENTRENADOR */}
           <div style={{ display: 'flex', gap: '1rem', marginBottom: '20px' }}>
             <button onClick={() => setSeccionEntrenador('clientes')} style={{ flex: 1, padding: '0.8rem', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: seccionEntrenador === 'clientes' ? '#38BDF8' : '#111827', color: seccionEntrenador === 'clientes' ? '#090D16' : '#9CA3AF' }}>
               👥 Clientes Registrados
@@ -279,7 +515,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
             </button>
           </div>
 
-          {/* VISTA 1: CLIENTES Y SEGUIMIENTO */}
           {seccionEntrenador === 'clientes' && (
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
@@ -302,7 +537,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
                 ))}
               </div>
 
-              {/* MODAL SIMPLIFICADO Y AUTOMÁTICO DE SEGUIMIENTO */}
               {clienteSeleccionado && (
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1rem' }}>
                   <div style={{ backgroundColor: '#111827', border: '1px solid #38BDF8', borderRadius: '16px', padding: '2rem', maxWidth: '600px', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -311,7 +545,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
                       <button onClick={() => setClienteSeleccionado(null)} style={{ backgroundColor: 'transparent', color: '#9CA3AF', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
                     </div>
 
-                    {/* FORMULARIO AUTOMÁTICO */}
                     <form onSubmit={asignarNuevaRutina} style={{ backgroundColor: '#090D16', padding: '1.2rem', borderRadius: '10px', marginBottom: '1.5rem', border: '1px solid #1F2937' }}>
                       <h4 style={{ margin: '0 0 0.8rem 0', color: '#00FF87' }}>⚡ Asignación Rápida de Ejercicio</h4>
                       
@@ -356,7 +589,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
                       </button>
                     </form>
 
-                    {/* LISTA Y ESTADO DE SEGUIMIENTO */}
                     <h4 style={{ color: '#FFF', marginBottom: '0.8rem' }}>📊 Rutinas Asignadas & Estado</h4>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                       {clienteSeleccionado.rutinas.length === 0 ? (
@@ -387,14 +619,12 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
             </div>
           )}
 
-          {/* VISTA 2: BANCO DE EJERCICIOS CON BOTONES RÁPIDOS Y AUTOCOMPLETADO */}
           {seccionEntrenador === 'ejercicios' && (
             <div style={{ backgroundColor: '#111827', borderRadius: '16px', padding: '1.5rem', border: '1px solid #1F2937' }}>
               <h3 style={{ margin: '0 0 1rem 0', color: '#38BDF8', fontSize: '1.2rem', fontWeight: '800' }}>
                 🏋️‍♂️ Catálogo de Ejercicios Disponibles
               </h3>
 
-              {/* OPCIONES RÁPIDAS AUTOMÁTICAS */}
               <div style={{ backgroundColor: '#090D16', padding: '1.2rem', borderRadius: '12px', marginBottom: '1.5rem', border: '1px solid #1F2937' }}>
                 <span style={{ display: 'block', color: '#00FF87', fontWeight: 'bold', marginBottom: '0.5rem', fontSize: '0.9rem' }}>
                   ⚡ Clic Rápido (Carga Automática):
@@ -412,7 +642,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
                   ))}
                 </div>
 
-                {/* FORMULARIO */}
                 <form onSubmit={agregarEjercicioCatalogo}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.8rem', marginBottom: '1rem' }}>
                     <input 
@@ -448,7 +677,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
                 </form>
               </div>
 
-              {/* GRILLA DE EJERCICIOS */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '15px' }}>
                 {catalogoEjercicios.map(ex => (
                   <div key={ex.id} style={{ backgroundColor: '#090D16', padding: '1.2rem', borderRadius: '10px', border: '1px solid #1F2937', position: 'relative' }}>
@@ -467,7 +695,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
             </div>
           )}
 
-          {/* VISTA 3: GYM */}
           {seccionEntrenador === 'gym' && (
             <div style={{ backgroundColor: '#111827', borderRadius: '16px', padding: '1.5rem', border: '1px solid #1F2937' }}>
               <h3 style={{ margin: '0 0 1rem 0', color: '#38BDF8' }}>🏢 Información del Gimnasio Vinculado</h3>
@@ -483,7 +710,7 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
   }
 
   // -------------------------------------------------------------
-  // RENDERIZADO SI ES CLIENTE
+  // RENDERIZADO: PERFIL DE CLIENTE
   // -------------------------------------------------------------
   return (
     <div style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif", backgroundColor: '#090D16', color: '#FFFFFF', minHeight: '100vh', paddingBottom: '60px' }}>
@@ -564,7 +791,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
           )}
         </div>
 
-        {/* METRICAS CLIENTE */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '25px' }}>
           <div style={{ backgroundColor: '#111827', padding: '1.2rem', borderRadius: '14px', border: '1px solid #1F2937', textAlign: 'center' }}>
             <span style={{ color: '#9CA3AF', fontSize: '0.8rem', fontWeight: '700' }}>EDAD</span>
@@ -584,7 +810,6 @@ export const Perfil = ({ user, onLogout, onNavigate }) => {
           </div>
         </div>
 
-        {/* EJERCICIOS CLIENTE */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
           <div style={{ backgroundColor: '#111827', borderRadius: '16px', padding: '1.5rem', border: '1px solid #1F2937' }}>
             <h3 style={{ margin: '0 0 1rem 0', color: '#38BDF8', fontSize: '1.1rem', fontWeight: '800' }}>

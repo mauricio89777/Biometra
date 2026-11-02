@@ -1,0 +1,4 @@
+mediapipe
+opencv-python
+numpy
+# ffmpeg debe estar instalado en el sistema (para generar H.264 reproducible en navegador)
