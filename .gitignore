@@ -8,20 +8,23 @@ output/
 # Variables de entorno
 .env
 .env.*
+!.env.example
 
-# por si acaso
-Analisis/venv/
-Analisis/videos/
-Analisis/output/
-Analisis/models/
-Base de Datos/uploads
-Base de Datos/originales
+
 
 #por las dudas de las dudas
 analisis/venv/
 analisis/videos/
 analisis/output/
 analisis/models/
+
+
+
+Backend/originales
+Backend/uploads/*
+!Backend/uploads/.gitkeep
+
+Backend/originales/
 
 
 
@@ -117,6 +120,8 @@ out
 .nuxt
 dist
 .output
+dist-ssr/
+.local
 
 # Gatsby files
 .cache/

@@ -1,0 +1,221 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Rol {
+  USUARIO
+  ADMIN
+}
+
+enum EstadoVideo {
+  PENDIENTE
+  PROCESANDO
+  PROCESADO
+  ERROR
+}
+
+enum EstadoAnalisis {
+  PENDIENTE
+  EN_PROCESO
+  COMPLETADO
+  ERROR
+}
+
+// ─────────────────────────────────────────────
+// USUARIO
+// ─────────────────────────────────────────────
+model Usuario {
+  id                Int       @id @default(autoincrement())
+  nombre            String    @db.VarChar(100)
+  email             String    @unique @db.VarChar(150)
+  password_hash     String    @db.VarChar(255)
+  rol               Rol       @default(USUARIO)
+
+  foto_perfil       String?   @db.VarChar(255)
+  foto_portada      String?   @db.VarChar(255)
+  fecha_nacimiento  DateTime?
+  peso              Float?
+  altura            Float?
+  genero            String?   @db.VarChar(20)
+
+  racha_actual      Int       @default(0)
+  racha_maxima      Int       @default(0)
+  ultima_actividad  DateTime?
+  total_sesiones    Int       @default(0)
+
+  fecha_registro    DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  videos             Video[]
+  sesiones           Sesion[]
+  gimnasiosFavoritos GimnasioFavorito[]
+
+  @@map("USUARIO")
+}
+
+model Ejercicio {
+  id             Int      @id @default(autoincrement())
+  nombre         String   @db.VarChar(100)
+  grupo_muscular String?  @db.VarChar(50)
+  tipo           String?  @db.VarChar(50)
+  descripcion    String?  @db.Text
+  video_ayuda    String?  @db.VarChar(255)
+
+  metricas  MetricaEjercicio[]
+  videos    Video[]
+  registros RegistroEjercicio[]
+
+  @@map("EJERCICIO")
+}
+
+model MetricaEjercicio {
+  id           Int       @id @default(autoincrement())
+  ejercicio_id Int
+  nombre       String    @db.VarChar(50)
+  unidad       String?   @db.VarChar(20)
+  ejercicio    Ejercicio @relation(fields: [ejercicio_id], references: [id], onDelete: Cascade, map: "fk_metrica_ejercicio")
+
+  @@unique([ejercicio_id, nombre])
+  @@map("METRICA_EJERCICIO")
+}
+
+model Video {
+  id                  Int         @id @default(autoincrement())
+  usuario_id          Int
+  ejercicio_id        Int
+  url_archivo         String      @db.VarChar(255)
+  url_video_procesado String?     @db.VarChar(255)
+  url_landmarks       String?     @db.VarChar(255)
+  url_informe         String?     @db.VarChar(255)
+  fecha_carga         DateTime    @default(now())
+  estado              EstadoVideo @default(PENDIENTE)
+
+  usuario   Usuario   @relation(fields: [usuario_id],   references: [id], onDelete: Cascade, map: "fk_video_usuario")
+  ejercicio Ejercicio @relation(fields: [ejercicio_id], references: [id], onDelete: Cascade, map: "fk_video_ejercicio")
+  analisis  Analisis[]
+
+  @@map("VIDEO")
+}
+
+model Analisis {
+  id             Int            @id @default(autoincrement())
+  video_id       Int
+  fecha_analisis DateTime       @default(now())
+  puntuacion     Float?
+  estado         EstadoAnalisis @default(PENDIENTE)
+
+  video        Video        @relation(fields: [video_id], references: [id], onDelete: Cascade, map: "fk_analisis_video")
+  metricas     Metrica[]
+  feedbacks    Feedback[]
+  repeticiones Repeticion[]
+
+  @@map("ANALISIS")
+}
+
+model Metrica {
+  id           Int      @id @default(autoincrement())
+  analisis_id  Int
+  tipo_metrica String   @db.VarChar(50)
+  valor        Float?
+  analisis     Analisis @relation(fields: [analisis_id], references: [id], onDelete: Cascade, map: "fk_metrica_analisis")
+
+  @@map("METRICA")
+}
+
+model Feedback {
+  id            Int      @id @default(autoincrement())
+  analisis_id   Int
+  observacion   String?  @db.VarChar(500)
+  recomendacion String?  @db.VarChar(500)
+  analisis      Analisis @relation(fields: [analisis_id], references: [id], onDelete: Cascade, map: "fk_feedback_analisis")
+
+  @@map("FEEDBACK")
+}
+
+model Repeticion {
+  id            Int      @id @default(autoincrement())
+  analisis_id   Int
+  numero_rep    Int
+  tiempo_inicio Float?
+  tiempo_fin    Float?
+  calificacion  Float?
+  analisis      Analisis @relation(fields: [analisis_id], references: [id], onDelete: Cascade, map: "fk_repeticion_analisis")
+
+  @@map("REPETICION")
+}
+
+model Sesion {
+  id           Int       @id @default(autoincrement())
+  usuario_id   Int
+  fecha        DateTime  @default(now())
+  notas        String?   @db.Text
+  duracion_min Int?
+  usuario      Usuario   @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_sesion_usuario")
+  registros    RegistroEjercicio[]
+
+  @@map("SESION")
+}
+
+model RegistroEjercicio {
+  id           Int       @id @default(autoincrement())
+  sesion_id    Int
+  ejercicio_id Int
+  notas        String?   @db.VarChar(255)
+
+  sesion    Sesion    @relation(fields: [sesion_id],    references: [id], onDelete: Cascade, map: "fk_registro_sesion")
+  ejercicio Ejercicio @relation(fields: [ejercicio_id], references: [id], onDelete: Cascade, map: "fk_registro_ejercicio")
+  series    Serie[]
+
+  @@map("REGISTRO_EJERCICIO")
+}
+
+model Serie {
+  id                    Int               @id @default(autoincrement())
+  registro_ejercicio_id Int
+  numero_serie          Int
+  repeticiones          Int
+  peso                  Float?
+  registro              RegistroEjercicio @relation(fields: [registro_ejercicio_id], references: [id], onDelete: Cascade, map: "fk_serie_registro")
+
+  @@map("SERIE")
+}
+
+model Gimnasio {
+  id              Int      @id @default(autoincrement())
+  google_place_id String   @unique @db.VarChar(150)
+  nombre          String   @db.VarChar(100)
+  direccion       String?  @db.VarChar(200)
+  latitud         Float?
+  longitud        Float?
+  telefono        String?  @db.VarChar(20)
+  horario         String?  @db.VarChar(100)
+  rating          Float?
+  foto_url        String?  @db.VarChar(255)
+  fecha_sync      DateTime @default(now())
+
+  favoritos GimnasioFavorito[]
+
+  @@map("GIMNASIO")
+}
+
+model GimnasioFavorito {
+  id          Int      @id @default(autoincrement())
+  usuario_id  Int
+  gimnasio_id Int
+  fecha_add   DateTime @default(now())
+
+  usuario  Usuario  @relation(fields: [usuario_id],  references: [id], onDelete: Cascade, map: "fk_fav_usuario")
+  gimnasio Gimnasio @relation(fields: [gimnasio_id], references: [id], onDelete: Cascade, map: "fk_fav_gimnasio")
+
+  @@unique([usuario_id, gimnasio_id])
+  @@map("GIMNASIO_FAVORITO")
+}
