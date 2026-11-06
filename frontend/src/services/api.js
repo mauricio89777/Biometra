@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000/', // Ajusta según el puerto de tu backend
+  baseURL: 'http://localhost:3000/', 
 });
 
 // Interceptor para inyectar automáticamente el token de autenticación
@@ -15,7 +15,7 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-// Funciones CRUD de Usuarios basadas exactamente en tu controlador backend
+// Funciones CRUD de Usuarios para el admin
 export const usuarioService = {
   listar: async () => {
     const response = await api.get('/usuarios');
@@ -39,6 +39,19 @@ export const usuarioService = {
   }
 };
 
+
+//Servicios para los analisis por pyhton
+
+export const ejercicioService ={
+  listarPorUsuario: async (usuarioId) =>{
+    const response = await api.get(`/sesiones/usuario/${usuarioId}`);
+    return response.data;
+  },
+  crear: async (datosSesion) => {
+    const response = await api.post('/sesiones', datosSesion);
+    return response.data;
+  }
+};
 
 
 

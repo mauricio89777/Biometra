@@ -5,9 +5,7 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
   // Pestaña activa dentro del panel de administración ('usuarios' | 'ejercicios' | 'gym')
   const [seccionActiva, setSeccionActiva] = useState('usuarios');
 
-  // ==========================================
-  // 1. ESTADOS Y CRUD DE USUARIOS (Conectado a Backend)
-  // ==========================================
+
   const [listaUsuarios, setListaUsuarios] = useState([]);
   const [busquedaUsuario, setBusquedaUsuario] = useState('');
   const [usuarioEditando, setUsuarioEditando] = useState(null);
@@ -18,10 +16,11 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
   const [formUsuario, setFormUsuario] = useState({
     nombre: '',
     email: '',
-    password: '', // Necesario para la API al crear
+    password: '', 
+    rol: 'USUARIO', // Coincide con tu enum de Prisma (USUARIO, ADMIN, etc.)
     peso: '',
     altura: '',
-    genero: 'M'
+    genero: ''
   });
 
   useEffect(() => {
@@ -46,17 +45,23 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
     }
   };
 
-  const handleGuardarUsuario = async (e) => {
+const handleGuardarUsuario = async (e) => {
     e.preventDefault();
     try {
+      // Limpiamos datos vacíos antes de enviar
+      const datosAEnviar = { ...formUsuario };
+      if (usuarioEditando && !datosAEnviar.password) {
+        delete datosAEnviar.password; // Si edita y no puso pass, no la enviamos
+      }
+
       if (usuarioEditando) {
-        await usuarioService.actualizar(usuarioEditando.id, formUsuario);
+        await usuarioService.actualizar(usuarioEditando.id, datosAEnviar);
         setUsuarioEditando(null);
       } else {
-        await usuarioService.crear(formUsuario);
+        await usuarioService.crear(datosAEnviar);
       }
       cargarUsuarios();
-      setFormUsuario({ nombre: '', email: '', password: '', peso: '', altura: '', genero: 'M' });
+      setFormUsuario({ nombre: '', email: '', password: '', rol: 'USUARIO', peso: '', altura: '', genero: '' });
     } catch (error) {
       alert('Error: ' + (error.response?.data?.error || error.message));
     }
@@ -67,22 +72,29 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
     setFormUsuario({ 
       nombre: u.nombre || '', 
       email: u.email || '', 
-      password: '', // Por seguridad no se trae el hash
+      password: '', // Vacío por seguridad
+      rol: u.rol || 'USUARIO',
       peso: u.peso || '', 
       altura: u.altura || '', 
-      genero: u.genero || 'M' 
+      genero: u.genero || '' 
     });
   };
 
-  const handleEliminarUsuario = async (id) => {
-    if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-      try {
-        await usuarioService.eliminar(id);
-        cargarUsuarios();
-      } catch (error) {
-        alert('Error al eliminar: ' + (error.response?.data?.error || error.message));
-      }
+ const handleEliminarUsuario = async (id) => {
+  // Verificamos que el ID exista antes de hacer la petición
+  if (!id) {
+    console.error("El ID del usuario es inválido o undefined");
+    return;
+  }
+
+  if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
+    try {
+      await usuarioService.eliminar(id);
+      cargarUsuarios(); // Recarga la tabla
+    } catch (error) {
+      alert('Error al eliminar: ' + (error.response?.data?.error || error.message));
     }
+  }
   };
 
   const usuariosFiltrados = listaUsuarios.filter(u =>
@@ -90,9 +102,7 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
     (u.email || '').toLowerCase().includes(busquedaUsuario.toLowerCase())
   );
 
-  // ==========================================
-  // 2. ESTADOS Y CRUD DE EJERCICIOS (Preparado para API futura)
-  // ==========================================
+ 
   const [catalogoEjercicios, setCatalogoEjercicios] = useState([
     { id: 1, nombre: 'Press de Pecho', grupo: 'Pecho', dificultad: 'Media' },
     { id: 2, nombre: 'Sentadilla Libre', grupo: 'Pierna', dificultad: 'Alta' }
@@ -111,9 +121,7 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
     setCatalogoEjercicios(catalogoEjercicios.filter(ex => ex.id !== id));
   };
 
-  // ==========================================
-  // RENDERIZADO VISUAL DEL PANEL UNIFICADO
-  // ==========================================
+
   return (
     <div style={{ fontFamily: "'Inter', system-ui, sans-serif", backgroundColor: '#090D16', color: '#FFFFFF', minHeight: '100vh', paddingBottom: '60px' }}>
       {/* HEADER */}
@@ -158,30 +166,56 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
               <h3 style={{ margin: '0 0 1rem 0', color: usuarioEditando ? '#38BDF8' : '#00FF87', fontSize: '1.1rem', fontWeight: '800' }}>
                 {usuarioEditando ? `✏️ Editando Usuario ID: ${usuarioEditando.id}` : '➕ Registrar Nuevo Usuario'}
               </h3>
-              <form onSubmit={handleGuardarUsuario} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Nombre</label>
-                  <input type="text" required placeholder="Ej: Carlos Pérez" value={formUsuario.nombre} onChange={(e) => setFormUsuario({ ...formUsuario, nombre: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Correo Electrónico</label>
-                  <input type="email" required placeholder="correo@ejemplo.com" value={formUsuario.email} onChange={(e) => setFormUsuario({ ...formUsuario, email: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Contraseña</label>
-                  <input type="password" placeholder={usuarioEditando ? "Dejar en blanco para no cambiar" : "Contraseña segura"} value={formUsuario.password} onChange={(e) => setFormUsuario({ ...formUsuario, password: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button type="submit" style={{ flex: 1, padding: '0.7rem', backgroundColor: usuarioEditando ? '#38BDF8' : '#00FF87', color: '#090D16', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' }}>
-                    {usuarioEditando ? 'Actualizar' : 'Crear'}
-                  </button>
-                  {usuarioEditando && (
-                    <button type="button" onClick={() => { setUsuarioEditando(null); setFormUsuario({ nombre: '', email: '', password: '', peso: '', altura: '', genero: 'M' }); }} style={{ padding: '0.7rem', backgroundColor: '#374151', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-                      Cancelar
+                <form onSubmit={handleGuardarUsuario} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'end' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Nombre Completo</label>
+                    <input type="text" required placeholder="Ej: Carlos Pérez" value={formUsuario.nombre} onChange={(e) => setFormUsuario({ ...formUsuario, nombre: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Correo Electrónico</label>
+                    <input type="email" required placeholder="correo@ejemplo.com" value={formUsuario.email} onChange={(e) => setFormUsuario({ ...formUsuario, email: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Contraseña</label>
+                    <input type="password" placeholder={usuarioEditando ? "Dejar en blanco para no cambiar" : "Contraseña obligatoria"} value={formUsuario.password} onChange={(e) => setFormUsuario({ ...formUsuario, password: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Rol</label>
+                    <select value={formUsuario.rol} onChange={(e) => setFormUsuario({ ...formUsuario, rol: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF' }}>
+                      <option value="USUARIO">Usuario</option>
+                      <option value="ADMIN">Administrador</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Peso kg (opcional)</label>
+                    <input type="number" step="0.1" placeholder="Ej: 75.5" value={formUsuario.peso} onChange={(e) => setFormUsuario({ ...formUsuario, peso: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Altura m (opcional)</label>
+                    <input type="number" step="0.01" placeholder="Ej: 1.75" value={formUsuario.altura} onChange={(e) => setFormUsuario({ ...formUsuario, altura: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Género (opcional)</label>
+                    <input type="text" placeholder="Ej: Masculino / Femenino" value={formUsuario.genero} onChange={(e) => setFormUsuario({ ...formUsuario, genero: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.5rem', gridColumn: '1 / -1' }}>
+                    <button type="submit" style={{ flex: 1, padding: '0.7rem', backgroundColor: usuarioEditando ? '#38BDF8' : '#00FF87', color: '#090D16', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' }}>
+                      {usuarioEditando ? 'Actualizar Usuario' : 'Crear Usuario'}
                     </button>
-                  )}
-                </div>
-              </form>
+                    {usuarioEditando && (
+                      <button type="button" onClick={() => { setUsuarioEditando(null); setFormUsuario({ nombre: '', email: '', password: '', rol: 'USUARIO', peso: '', altura: '', genero: '' }); }} style={{ padding: '0.7rem 1.2rem', backgroundColor: '#374151', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
+                </form>
             </div>
 
             {/* Tabla de Usuarios */}

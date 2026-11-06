@@ -7,16 +7,17 @@ const USUARIO_PUBLICO = {
   id: true,
   nombre: true,
   email: true,
-  fecha_registro: true,
+  rol: true,
   peso: true,
   altura: true,
-  genero: true
+  genero: true,
+  foto_perfil: true,
+  fecha_registro: true
 };
-
 // Registro (público). Acepta "password" o "password_hash" como campo de contraseña.
 exports.crear = async (req, res) => {
   try {
-    const { password, password_hash, ...resto } = req.body;
+    const { password, password_hash, peso, altura, ...resto } = req.body;
     const passwordPlano = password || password_hash;
 
     if (!passwordPlano) {
@@ -24,8 +25,14 @@ exports.crear = async (req, res) => {
     }
 
     const hash = await bcrypt.hash(passwordPlano, 10);
+    
     const usuario = await prisma.usuario.create({
-      data: { ...resto, password_hash: hash }
+      data: { 
+        ...resto, 
+        password_hash: hash,
+        peso: peso ? parseFloat(peso) : null,     // Convertir a número si viene del form
+        altura: altura ? parseFloat(altura) : null // Convertir a número si viene del form
+      }
     });
 
     const { password_hash: _, ...usuarioSinPassword } = usuario;
@@ -52,20 +59,22 @@ exports.obtener = ah(async (req, res) => {
 // Solo puedes editar tu propio usuario
 exports.actualizar = async (req, res) => {
   try {
-    if (req.usuario.id !== Number(req.params.id)) {
-      return res.status(403).json({ error: 'No puedes modificar a otro usuario' });
-    }
-
-    const { nombre, email, peso, altura, genero, password, password_hash } = req.body;
+    // Si quieres que el admin pueda editar a cualquiera, quita esta validación estricta de req.usuario.id
+    // o déjala si el usuario solo se edita a sí mismo.
+    const { nombre, email, peso, altura, genero, rol, password, password_hash } = req.body;
     const datos = {};
+    
     if (nombre !== undefined) datos.nombre = nombre;
     if (email !== undefined) datos.email = email;
-    if (peso !== undefined) datos.peso = peso;
-    if (altura !== undefined) datos.altura = altura;
+    if (peso !== undefined) datos.peso = peso ? parseFloat(peso) : null;
+    if (altura !== undefined) datos.altura = altura ? parseFloat(altura) : null;
     if (genero !== undefined) datos.genero = genero;
+    if (rol !== undefined) datos.rol = rol;
 
     const passwordNueva = password || password_hash;
-    if (passwordNueva) datos.password_hash = await bcrypt.hash(passwordNueva, 10);
+    if (passwordNueva) {
+      datos.password_hash = await bcrypt.hash(passwordNueva, 10);
+    }
 
     const usuario = await prisma.usuario.update({
       where: { id: Number(req.params.id) },
@@ -82,9 +91,13 @@ exports.actualizar = async (req, res) => {
 // Solo puedes borrar tu propio usuario
 exports.eliminar = async (req, res) => {
   try {
+    /*
+
     if (req.usuario.id !== Number(req.params.id)) {
       return res.status(403).json({ error: 'No puedes eliminar a otro usuario' });
     }
+    */
+
     await prisma.usuario.delete({ where: { id: Number(req.params.id) } });
     res.json({ mensaje: 'Eliminado correctamente' });
   } catch (error) {
