@@ -47,9 +47,6 @@ model Usuario {
   altura            Float?
   genero            String?   @db.VarChar(20)
 
-  racha_actual      Int       @default(0)
-  racha_maxima      Int       @default(0)
-  ultima_actividad  DateTime?
   total_sesiones    Int       @default(0)
 
   fecha_registro    DateTime  @default(now())

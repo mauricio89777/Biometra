@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const prisma = require('./utils/prisma');
+const authRoutes =require('./routes/authRoutes');
 
 // Sin JWT_SECRET no se pueden firmar ni verificar tokens: mejor fallar de inmediato
 if (!process.env.JWT_SECRET) {
@@ -21,9 +22,11 @@ app.get('/', (req, res) => {
   res.json({ mensaje: 'API Biometra funcionando' });
 });
 
+
 // ============================================
 // RUTAS
 // ============================================
+app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/', require('./routes/authRoutes'));            // POST /login
 app.use('/usuarios', require('./routes/usuariosRoutes'));
 app.use('/ejercicios', require('./routes/ejerciciosRoutes'));
