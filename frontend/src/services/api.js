@@ -6,7 +6,7 @@ const api = axios.create({
 
 // Interceptor para inyectar automáticamente el token de autenticación
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token'); // O donde guardes tu token al iniciar sesión
+  const token = localStorage.getItem('token'); 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -49,6 +49,20 @@ export const ejercicioService ={
   },
   crear: async (datosSesion) => {
     const response = await api.post('/sesiones', datosSesion);
+    return response.data;
+  }
+};
+
+
+//Login
+
+export const authService = {
+  login: async (credenciales) => {
+    const response = await api.post('/api/auth/login', credenciales);
+    return response.data;
+  },
+  register: async (datosUsuario) => {
+    const response = await api.post('/api/auth/register', datosUsuario);
     return response.data;
   }
 };
