@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { usuarioService } from '../services/api'; // Tu servicio centralizado
+import { usuarioService } from '../services/api'; 
 
 export const AdminPanel = ({ user, onLogout, onNavigate }) => {
-  // Pestaña activa dentro del panel de administración ('usuarios' | 'ejercicios' | 'gym')
+ 
   const [seccionActiva, setSeccionActiva] = useState('usuarios');
 
 
