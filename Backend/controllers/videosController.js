@@ -158,8 +158,7 @@ exports.eliminar = async (req, res) => {
 
 
 
-
-exports.analizar = (req, res) => {
+exports.analizar = async (req, res) => { // <-- 1. Agregado async aquí
   // 1. Validar que Multer recibió el video
   if (!req.file) {
     return res.status(400).json({
@@ -169,7 +168,7 @@ exports.analizar = (req, res) => {
   }
 
   // 2. Obtener el ejercicio seleccionado
-  const { exercise } = req.body;
+  const { exercise, usuario_id } = req.body; // Asegúrate de recibir usuario_id o tómalo del req.user si usas JWT
 
   if (!exercise) {
     return res.status(400).json({
@@ -238,7 +237,8 @@ exports.analizar = (req, res) => {
     }
   });
 
-  proceso.on('close', (codigo) => {
+  // Cuando termina el proceso
+  proceso.on('close', async (codigo) => { // <-- 2. Agregado async aquí también
     console.log(`[PYTHON] Proceso terminado con código ${codigo}`);
 
     if (codigo !== 0) {
@@ -250,12 +250,56 @@ exports.analizar = (req, res) => {
 
     try {
       const resultado = JSON.parse(salida);
+
+      // --- 3. GUARDAR EN BASE DE DATOS USANDO PRISMA ---
+      // Buscamos el ejercicio en la BD usando la script_key que envió el cliente
+      const ejercicioDb = await prisma.ejercicio.findUnique({
+        where: { script_key: exercise }
+      });
+
+      if (ejercicioDb) {
+        await prisma.video.create({
+          data: {
+            usuario_id: Number(usuario_id || 1), // Reemplaza por req.user.id si manejas autenticación
+            ejercicio_id: ejercicioDb.id,
+            url_archivo: videoPath,
+            url_video_procesado: resultado.video_procesado_path || null,
+            url_informe: resultado.informe_path || null,
+            estado: 'PROCESADO',
+            analisis: {
+              create: {
+                puntuacion: resultado.puntuacion || 0,
+                estado: 'COMPLETADO',
+                // Guardamos las métricas que arroje el JSON de Python de forma dinámica
+                metricas: {
+                  create: (resultado.metricas || []).map(m => ({
+                    tipo_metrica: m.nombre || 'general',
+                    valor: m.valor || 0
+                  }))
+                },
+                // Si el script te devuelve repeticiones, las guardamos también
+                repeticiones: {
+                  create: (resultado.repeticiones || []).map(r => ({
+                    numero_rep: r.numero || 0,
+                    tiempo_inicio: r.inicio || 0,
+                    tiempo_fin: r.fin || 0,
+                    calificacion: r.calificacion || 0
+                  }))
+                }
+              }
+            }
+          }
+        });
+      }
+      // ------------------------------------------------
+
       return res.json(resultado);
     } catch (error) {
+      console.error('[DB ERROR]', error);
       return res.status(500).json({
         estado: 'error',
-        error: 'Python no devolvió un JSON válido',
-        salida
+        error: 'Python devolvió un JSON pero ocurrió un error al guardarlo en la base de datos',
+        detalle: error.message
       });
     }
   });
