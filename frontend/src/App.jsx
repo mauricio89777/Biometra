@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Login from './login';
-import Gps from './Gps'; 
+import Gps from './Gps';
 import Ejercicios from './ejercicios';
-import { Perfil } from './perfil'; 
+import { Perfil } from './perfil';
 import './App.css';
+import { AdminPanel } from './components/AdminPanel';
 
 // NUEVO ICONO BIOMETRA: Símbolo abstracto de pivote cinemático y visión por computadora
 const LogoBiometra = () => (
@@ -60,15 +61,35 @@ const LogoBiometra = () => (
 );
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState(null);
+   const [currentUser, setCurrentUser] = useState(() => {
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+
+    if (!token || !savedUser) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(savedUser);
+    } catch (error) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return null;
+    }
+  });
   const [currentView, setCurrentView] = useState('app');
   const [activeModal, setActiveModal] = useState(null);
 
+
+
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
+    localStorage.setItem('user', JSON.stringify(user));
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setCurrentUser(null);
     setCurrentView('app');
   };
@@ -76,12 +97,26 @@ export default function App() {
   if (!currentUser) {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
+  
+  const rolNormalizado = (
+    currentUser.rol || currentUser.role || ''
+  ).toUpperCase();
 
+
+   if (rolNormalizado === 'ADMIN') {
+    return (
+      <AdminPanel
+        user={currentUser}
+        onLogout={handleLogout}
+      />
+    );
+  }
+  
   // RUTAS INTERNAS NAVEGABLES
   if (currentView === 'perfil') return <Perfil user={currentUser} onLogout={handleLogout} onNavigate={setCurrentView} />;
   if (currentView === 'gps') return <Gps onNavigate={setCurrentView} />;
   if (currentView === 'ejercicios') return <Ejercicios onNavigate={setCurrentView} />;
-
+ 
   return (
     <div className="app-container">
       {/* NAVBAR */}

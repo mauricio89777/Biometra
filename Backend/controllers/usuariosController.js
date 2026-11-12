@@ -14,9 +14,23 @@ const USUARIO_PUBLICO = {
   foto_perfil: true,
   fecha_registro: true
 };
+
+const esAdmin = (req) => {
+  return req.usuario?.rol?.toUpperCase() === 'ADMIN';
+};
+
+const esPropietarioOAdmin = (req, id) => {
+  return esAdmin(req) || Number(req.usuario?.id) === Number(id);
+};
+
 // Registro (público). Acepta "password" o "password_hash" como campo de contraseña.
 exports.crear = async (req, res) => {
   try {
+    if (!esAdmin(req)){
+      return res.status(403).json({
+        error: 'No tienes permiso para crear usuarios'
+      });
+    }
     const { password, password_hash, peso, altura, ...resto } = req.body;
     const passwordPlano = password || password_hash;
 
@@ -27,11 +41,13 @@ exports.crear = async (req, res) => {
     const hash = await bcrypt.hash(passwordPlano, 10);
     
     const usuario = await prisma.usuario.create({
-      data: { 
-        ...resto, 
-        password_hash: hash,
-        peso: peso ? parseFloat(peso) : null,     // Convertir a número si viene del form
-        altura: altura ? parseFloat(altura) : null // Convertir a número si viene del form
+      data: {
+      ...resto,
+      email: resto.email?.trim().toLowerCase(),
+      rol: resto.rol?.toUpperCase() || 'USUARIO',
+      password_hash: hash,
+      peso: peso ? parseFloat(peso) : null,
+      altura: altura ? parseFloat(altura) : null
       }
     });
 
@@ -42,34 +58,98 @@ exports.crear = async (req, res) => {
   }
 };
 
+
+
+
 exports.listar = ah(async (req, res) => {
+  if (!esAdmin(req)) {
+    return res.status(403).json({
+      error: 'No tienes permiso para listar usuarios'
+    });
+  }
   const usuarios = await prisma.usuario.findMany({ select: USUARIO_PUBLICO });
   res.json(usuarios);
 });
 
 exports.obtener = ah(async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!esPropietarioOAdmin(req, id)) {
+    return res.status(403).json({
+      error: 'No tienes permisos para consultar este usuario'
+    });
+  }
+
   const usuario = await prisma.usuario.findUnique({
-    where: { id: Number(req.params.id) },
+    where: { id },
     select: USUARIO_PUBLICO
   });
-  if (!usuario) return res.status(404).json({ error: 'No encontrado' });
+
+  if (!usuario) {
+    return res.status(404).json({ error: 'No encontrado' });
+  }
+
   res.json(usuario);
 });
 
 // Solo puedes editar tu propio usuario
 exports.actualizar = async (req, res) => {
   try {
-    // Si quieres que el admin pueda editar a cualquiera, quita esta validación estricta de req.usuario.id
-    // o déjala si el usuario solo se edita a sí mismo.
+    const id = Number(req.params.id);
+
+    if (!esPropietarioOAdmin(req, id)) {
+      return res.status(403).json({
+        error: 'No tienes permisos para modificar este usuario'
+      });
+    }
+
     const { nombre, email, peso, altura, genero, rol, password, password_hash } = req.body;
     const datos = {};
     
     if (nombre !== undefined) datos.nombre = nombre;
-    if (email !== undefined) datos.email = email;
-    if (peso !== undefined) datos.peso = peso ? parseFloat(peso) : null;
-    if (altura !== undefined) datos.altura = altura ? parseFloat(altura) : null;
+    if (email !== undefined) {
+      datos.email = email.trim().toLowerCase();
+    }
+
+    if (peso !== undefined) { 
+      datos.peso = peso ? parseFloat(peso) : null;
+    }
+   
+    if (altura !== undefined) { 
+      datos.altura = altura ? parseFloat(altura) : null;
+    }
     if (genero !== undefined) datos.genero = genero;
-    if (rol !== undefined) datos.rol = rol;
+    
+    if (rol !== undefined) {
+    const rolNormalizado =
+      typeof rol === 'string' ? rol.trim().toUpperCase() : '';
+
+    if (!['USUARIO', 'ADMIN'].includes(rolNormalizado)) {
+      return res.status(400).json({ error: 'Rol no válido' });
+    }
+
+    const esMiPropiaCuenta = Number(req.usuario.id) === id;
+    const rolActual = req.usuario.rol?.toUpperCase();
+
+    // Nadie puede cambiar su propio rol.
+    if (esMiPropiaCuenta && rolNormalizado !== rolActual) {
+      return res.status(403).json({
+        error: 'No puedes modificar tu propio Rol'
+      });
+    }
+
+    // Solo un administrador puede cambiar el rol de otro usuario.
+    if (!esMiPropiaCuenta && !esAdmin(req)) {
+      return res.status(403).json({
+        error: 'No tienes permisos para modificar el Rol'
+      });
+    }
+
+    // Si es la propia cuenta y el rol no cambia, no hace falta actualizarlo.
+    if (!esMiPropiaCuenta) {
+      datos.rol = rolNormalizado;
+    }
+    }
 
     const passwordNueva = password || password_hash;
     if (passwordNueva) {
@@ -77,7 +157,7 @@ exports.actualizar = async (req, res) => {
     }
 
     const usuario = await prisma.usuario.update({
-      where: { id: Number(req.params.id) },
+      where: { id },
       data: datos
     });
 
@@ -88,17 +168,17 @@ exports.actualizar = async (req, res) => {
   }
 };
 
-// Solo puedes borrar tu propio usuario
 exports.eliminar = async (req, res) => {
   try {
-    /*
-
-    if (req.usuario.id !== Number(req.params.id)) {
-      return res.status(403).json({ error: 'No puedes eliminar a otro usuario' });
+    const id = Number(req.params.id);
+    if (!esPropietarioOAdmin(req, id)){
+      return res.status(403).json({
+        error: 'No tienes los permisos para elminar este usuario'
+      });
     }
-    */
+    
 
-    await prisma.usuario.delete({ where: { id: Number(req.params.id) } });
+    await prisma.usuario.delete({ where: {id} });
     res.json({ mensaje: 'Eliminado correctamente' });
   } catch (error) {
     manejarError(res, error);

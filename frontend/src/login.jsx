@@ -125,7 +125,7 @@ export default function Login({ onLoginSuccess }) {
           onLoginSuccess({
             id: response.usuario.id,
             email: response.usuario.email,
-            role: response.usuario.rol.toLowerCase(), // 'usuario' o 'admin'
+            role: response.usuario.rol, // 'usuario' o 'admin' estaba en lowe.caser
             name: response.usuario.nombre
           });
         }
