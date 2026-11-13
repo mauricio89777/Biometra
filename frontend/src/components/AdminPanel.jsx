@@ -2,30 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { usuarioService } from '../services/api'; 
 
 export const AdminPanel = ({ user, onLogout, onNavigate }) => {
- 
   const [seccionActiva, setSeccionActiva] = useState('usuarios');
 
-
+  // Estados para Usuarios
   const [listaUsuarios, setListaUsuarios] = useState([]);
   const [busquedaUsuario, setBusquedaUsuario] = useState('');
   const [usuarioEditando, setUsuarioEditando] = useState(null);
-  
   const [cargando, setCargando] = useState(false);
-  const [errorAPI, setErrorApi]= useState(null);
+  const [errorAPI, setErrorApi] = useState(null);
 
   const [formUsuario, setFormUsuario] = useState({
     nombre: '',
     email: '',
     password: '', 
-    rol: 'USUARIO', // Coincide con tu enum de Prisma (USUARIO, ADMIN, etc.)
+    rol: 'USUARIO',
     peso: '',
     altura: '',
     genero: ''
   });
 
+  // Estados para Ejercicios (Conectados al Backend y Python)
+  const [listaEjerciciosAdmin, setListaEjerciciosAdmin] = useState([]);
+  const [sincronizando, setSincronizando] = useState(false);
+
+  // Efectos de carga según la sección activa
   useEffect(() => {
     if (seccionActiva === 'usuarios') {
       cargarUsuarios();
+    } else if (seccionActiva === 'ejercicios') {
+      cargarEjerciciosAdmin();
     }
   }, [seccionActiva]);
 
@@ -34,24 +39,22 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
     setErrorApi(null);
     try {
       const data = await usuarioService.listar();
-      // asegurarmos que data se un array cpor segurida
       setListaUsuarios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error al cargar usuarios:', error);
-      setErrorApi(error.response?.data?.error || error.message || 'no se pudo conectar con el servidor' );
-      setListaUsuarios([]); //eviat quemuera el map()
+      setErrorApi(error.response?.data?.error || error.message || 'No se pudo conectar con el servidor');
+      setListaUsuarios([]);
     } finally {
-        setCargando(false);
+      setCargando(false);
     }
   };
 
-const handleGuardarUsuario = async (e) => {
+  const handleGuardarUsuario = async (e) => {
     e.preventDefault();
     try {
-      // Limpiamos datos vacíos antes de enviar
       const datosAEnviar = { ...formUsuario };
       if (usuarioEditando && !datosAEnviar.password) {
-        delete datosAEnviar.password; // Si edita y no puso pass, no la enviamos
+        delete datosAEnviar.password;
       }
 
       if (usuarioEditando) {
@@ -72,7 +75,7 @@ const handleGuardarUsuario = async (e) => {
     setFormUsuario({ 
       nombre: u.nombre || '', 
       email: u.email || '', 
-      password: '', // Vacío por seguridad
+      password: '', 
       rol: u.rol || 'USUARIO',
       peso: u.peso || '', 
       altura: u.altura || '', 
@@ -80,21 +83,16 @@ const handleGuardarUsuario = async (e) => {
     });
   };
 
- const handleEliminarUsuario = async (id) => {
-  // Verificamos que el ID exista antes de hacer la petición
-  if (!id) {
-    console.error("El ID del usuario es inválido o undefined");
-    return;
-  }
-
-  if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
-    try {
-      await usuarioService.eliminar(id);
-      cargarUsuarios(); // Recarga la tabla
-    } catch (error) {
-      alert('Error al eliminar: ' + (error.response?.data?.error || error.message));
+  const handleEliminarUsuario = async (id) => {
+    if (!id) return;
+    if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
+      try {
+        await usuarioService.eliminar(id);
+        cargarUsuarios();
+      } catch (error) {
+        alert('Error al eliminar: ' + (error.response?.data?.error || error.message));
+      }
     }
-  }
   };
 
   const usuariosFiltrados = listaUsuarios.filter(u =>
@@ -102,28 +100,55 @@ const handleGuardarUsuario = async (e) => {
     (u.email || '').toLowerCase().includes(busquedaUsuario.toLowerCase())
   );
 
- 
-  const [catalogoEjercicios, setCatalogoEjercicios] = useState([
-    { id: 1, nombre: 'Press de Pecho', grupo: 'Pecho', dificultad: 'Media' },
-    { id: 2, nombre: 'Sentadilla Libre', grupo: 'Pierna', dificultad: 'Alta' }
-  ]);
-  const [formEjercicio, setFormEjercicio] = useState({ nombre: '', grupo: 'Pecho', dificultad: 'Media' });
-
-  const handleGuardarEjercicio = (e) => {
-    e.preventDefault();
-    if (!formEjercicio.nombre.trim()) return;
-    const nuevo = { id: Date.now(), ...formEjercicio };
-    setCatalogoEjercicios([...catalogoEjercicios, nuevo]);
-    setFormEjercicio({ nombre: '', grupo: 'Pecho', dificultad: 'Media' });
+  // --- MÉTODOS DEL BANCO DE EJERCICIOS (PYTHON & PRISMA) ---
+  const cargarEjerciciosAdmin = async () => {
+    try {
+      const res = await fetch('http://localhost:3000/ejercicios/admin/listar');
+      const data = await res.json();
+      setListaEjerciciosAdmin(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error al cargar ejercicios de admin:', error);
+    }
   };
 
-  const handleEliminarEjercicio = (id) => {
-    setCatalogoEjercicios(catalogoEjercicios.filter(ex => ex.id !== id));
+  const handleSincronizarPython = async () => {
+    setSincronizando(true);
+    try {
+      const res = await fetch('http://localhost:3000/ejercicios/sincronizar', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        alert('¡Ejercicios sincronizados correctamente desde Python!');
+        cargarEjerciciosAdmin();
+      } else {
+        alert('Error al sincronizar: ' + (data.error || 'Desconocido'));
+      }
+    } catch (error) {
+      alert('Error de red al sincronizar con Python: ' + error.message);
+    } finally {
+      setSincronizando(false);
+    }
   };
 
+  const handleToggleActivoEjercicio = async (id, estadoActual) => {
+    try {
+      const res = await fetch(`http://localhost:3000/ejercicios/admin/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activo: !estadoActual })
+      });
+      if (res.ok) {
+        cargarEjerciciosAdmin();
+      } else {
+        alert('No se pudo cambiar el estado del ejercicio.');
+      }
+    } catch (error) {
+      console.error('Error al actualizar visibilidad:', error);
+    }
+  };
 
   return (
     <div style={{ fontFamily: "'Inter', system-ui, sans-serif", backgroundColor: '#090D16', color: '#FFFFFF', minHeight: '100vh', paddingBottom: '60px' }}>
+      
       {/* HEADER */}
       <header style={{ backgroundColor: '#111827', borderBottom: '1px solid #1F2937', padding: '1rem 2rem', marginBottom: '25px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -149,7 +174,7 @@ const handleGuardarUsuario = async (e) => {
           <button 
             onClick={() => setSeccionActiva('ejercicios')} 
             style={{ flex: 1, padding: '0.8rem', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: seccionActiva === 'ejercicios' ? '#38BDF8' : '#111827', color: seccionActiva === 'ejercicios' ? '#090D16' : '#9CA3AF' }}>
-            🏋️‍♂️ Banco de Ejercicios
+            🏋️‍♂️ Banco de Ejercicios (Python)
           </button>
           <button 
             onClick={() => setSeccionActiva('gym')} 
@@ -161,61 +186,53 @@ const handleGuardarUsuario = async (e) => {
         {/* CONTENIDO: SECCIÓN USUARIOS */}
         {seccionActiva === 'usuarios' && (
           <div>
-            {/* Formulario de Usuario */}
             <div style={{ backgroundColor: '#111827', padding: '1.5rem', borderRadius: '14px', border: '1px solid #1F2937', marginBottom: '25px' }}>
               <h3 style={{ margin: '0 0 1rem 0', color: usuarioEditando ? '#38BDF8' : '#00FF87', fontSize: '1.1rem', fontWeight: '800' }}>
                 {usuarioEditando ? `✏️ Editando Usuario ID: ${usuarioEditando.id}` : '➕ Registrar Nuevo Usuario'}
               </h3>
-                <form onSubmit={handleGuardarUsuario} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'end' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Nombre Completo</label>
-                    <input type="text" required placeholder="Ej: Carlos Pérez" value={formUsuario.nombre} onChange={(e) => setFormUsuario({ ...formUsuario, nombre: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Correo Electrónico</label>
-                    <input type="email" required placeholder="correo@ejemplo.com" value={formUsuario.email} onChange={(e) => setFormUsuario({ ...formUsuario, email: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Contraseña</label>
-                    <input type="password" placeholder={usuarioEditando ? "Dejar en blanco para no cambiar" : "Contraseña obligatoria"} value={formUsuario.password} onChange={(e) => setFormUsuario({ ...formUsuario, password: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Rol</label>
-                    <select value={formUsuario.rol} onChange={(e) => setFormUsuario({ ...formUsuario, rol: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF' }}>
-                      <option value="USUARIO">Usuario</option>
-                      <option value="ADMIN">Administrador</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Peso kg (opcional)</label>
-                    <input type="number" step="0.1" placeholder="Ej: 75.5" value={formUsuario.peso} onChange={(e) => setFormUsuario({ ...formUsuario, peso: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Altura m (opcional)</label>
-                    <input type="number" step="0.01" placeholder="Ej: 1.75" value={formUsuario.altura} onChange={(e) => setFormUsuario({ ...formUsuario, altura: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Género (opcional)</label>
-                    <input type="text" placeholder="Ej: Masculino / Femenino" value={formUsuario.genero} onChange={(e) => setFormUsuario({ ...formUsuario, genero: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '0.5rem', gridColumn: '1 / -1' }}>
-                    <button type="submit" style={{ flex: 1, padding: '0.7rem', backgroundColor: usuarioEditando ? '#38BDF8' : '#00FF87', color: '#090D16', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' }}>
-                      {usuarioEditando ? 'Actualizar Usuario' : 'Crear Usuario'}
+              <form onSubmit={handleGuardarUsuario} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'end' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Nombre Completo</label>
+                  <input type="text" required placeholder="Ej: Carlos Pérez" value={formUsuario.nombre} onChange={(e) => setFormUsuario({ ...formUsuario, nombre: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Correo Electrónico</label>
+                  <input type="email" required placeholder="correo@ejemplo.com" value={formUsuario.email} onChange={(e) => setFormUsuario({ ...formUsuario, email: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Contraseña</label>
+                  <input type="password" placeholder={usuarioEditando ? "Dejar en blanco para no cambiar" : "Contraseña obligatoria"} value={formUsuario.password} onChange={(e) => setFormUsuario({ ...formUsuario, password: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Rol</label>
+                  <select value={formUsuario.rol} onChange={(e) => setFormUsuario({ ...formUsuario, rol: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF' }}>
+                    <option value="USUARIO">Usuario</option>
+                    <option value="ADMIN">Administrador</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Peso kg (opcional)</label>
+                  <input type="number" step="0.1" placeholder="Ej: 75.5" value={formUsuario.peso} onChange={(e) => setFormUsuario({ ...formUsuario, peso: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Altura m (opcional)</label>
+                  <input type="number" step="0.01" placeholder="Ej: 1.75" value={formUsuario.altura} onChange={(e) => setFormUsuario({ ...formUsuario, altura: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Género (opcional)</label>
+                  <input type="text" placeholder="Ej: Masculino / Femenino" value={formUsuario.genero} onChange={(e) => setFormUsuario({ ...formUsuario, genero: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', gridColumn: '1 / -1' }}>
+                  <button type="submit" style={{ flex: 1, padding: '0.7rem', backgroundColor: usuarioEditando ? '#38BDF8' : '#00FF87', color: '#090D16', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' }}>
+                    {usuarioEditando ? 'Actualizar Usuario' : 'Crear Usuario'}
+                  </button>
+                  {usuarioEditando && (
+                    <button type="button" onClick={() => { setUsuarioEditando(null); setFormUsuario({ nombre: '', email: '', password: '', rol: 'USUARIO', peso: '', altura: '', genero: '' }); }} style={{ padding: '0.7rem 1.2rem', backgroundColor: '#374151', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
+                      Cancelar
                     </button>
-                    {usuarioEditando && (
-                      <button type="button" onClick={() => { setUsuarioEditando(null); setFormUsuario({ nombre: '', email: '', password: '', rol: 'USUARIO', peso: '', altura: '', genero: '' }); }} style={{ padding: '0.7rem 1.2rem', backgroundColor: '#374151', color: '#FFF', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-                        Cancelar
-                      </button>
-                    )}
-                  </div>
-                </form>
+                  )}
+                </div>
+              </form>
             </div>
 
             {/* Tabla de Usuarios */}
@@ -255,41 +272,85 @@ const handleGuardarUsuario = async (e) => {
           </div>
         )}
 
-        {/* CONTENIDO: SECCIÓN EJERCICIOS */}
+        {/* CONTENIDO: SECCIÓN EJERCICIOS (CONECTADO A PYTHON & PRISMA) */}
         {seccionActiva === 'ejercicios' && (
           <div style={{ backgroundColor: '#111827', padding: '1.5rem', borderRadius: '14px', border: '1px solid #1F2937' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#00FF87', fontSize: '1.1rem', fontWeight: '800' }}>🏋️‍♂️ Gestión del Banco de Ejercicios</h3>
-            <form onSubmit={handleGuardarEjercicio} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', alignItems: 'end', marginBottom: '1.5rem' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Nombre Ejercicio</label>
-                <input type="text" required placeholder="Ej: Dominadas" value={formEjercicio.nombre} onChange={(e) => setFormEjercicio({ ...formEjercicio, nombre: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF', boxSizing: 'border-box' }} />
+                <h3 style={{ margin: '0 0 0.3rem 0', color: '#00FF87', fontSize: '1.2rem', fontWeight: '800' }}>🏋️‍♂️ Banco de Ejercicios (Python & IA)</h3>
+                <p style={{ color: '#9CA3AF', fontSize: '0.85rem', margin: 0 }}>Sincroniza y controla la visibilidad de los ejercicios analizados por visión por computadora.</p>
               </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#9CA3AF', marginBottom: '0.3rem', fontWeight: '600' }}>Grupo Muscular</label>
-                <select value={formEjercicio.grupo} onChange={(e) => setFormEjercicio({ ...formEjercicio, grupo: e.target.value })} style={{ width: '100%', padding: '0.65rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF' }}>
-                  <option value="Pecho">Pecho</option>
-                  <option value="Pierna">Pierna</option>
-                  <option value="Espalda">Espalda</option>
-                  <option value="Hombro">Hombro</option>
-                  <option value="Brazo">Brazo</option>
-                </select>
-              </div>
-              <button type="submit" style={{ padding: '0.7rem', backgroundColor: '#00FF87', color: '#090D16', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: 'pointer' }}>
-                Agregar Ejercicio
+              <button 
+                onClick={handleSincronizarPython} 
+                disabled={sincronizando}
+                style={{ padding: '0.7rem 1.2rem', backgroundColor: '#00FF87', color: '#090D16', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: sincronizando ? 'wait' : 'pointer' }}
+              >
+                {sincronizando ? 'Sincronizando con Python...' : '🔄 Sincronizar Ejercicios'}
               </button>
-            </form>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-              {catalogoEjercicios.map(ex => (
-                <div key={ex.id} style={{ backgroundColor: '#090D16', padding: '1rem', borderRadius: '10px', border: '1px solid #1F2937', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h4 style={{ margin: '0 0 0.3rem 0', color: '#FFF' }}>{ex.nombre}</h4>
-                    <span style={{ fontSize: '0.75rem', color: '#38BDF8', background: 'rgba(56,189,248,0.1)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>{ex.grupo}</span>
-                  </div>
-                  <button onClick={() => handleEliminarEjercicio(ex.id)} style={{ background: 'transparent', color: '#ef4444', border: 'none', cursor: 'pointer', fontSize: '1.1rem' }}>🗑️</button>
-                </div>
-              ))}
             </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #1F2937', color: '#38BDF8' }}>
+                    <th style={{ padding: '0.8rem' }}>ID</th>
+                    <th style={{ padding: '0.8rem' }}>Nombre</th>
+                    <th style={{ padding: '0.8rem' }}>Script Key (Python)</th>
+                    <th style={{ padding: '0.8rem' }}>Tipo</th>
+                    <th style={{ padding: '0.8rem' }}>Estado en App</th>
+                    <th style={{ padding: '0.8rem', textAlign: 'center' }}>Acciones de Visibilidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {listaEjerciciosAdmin.length > 0 ? (
+                    listaEjerciciosAdmin.map(ex => (
+                      <tr key={ex.id} style={{ borderBottom: '1px solid #1F2937' }}>
+                        <td style={{ padding: '0.8rem', color: '#9CA3AF' }}>#{ex.id}</td>
+                        <td style={{ padding: '0.8rem', fontWeight: 'bold', color: '#FFF' }}>{ex.nombre}</td>
+                        <td style={{ padding: '0.8rem', color: '#38BDF8', fontFamily: 'monospace' }}>{ex.script_key}</td>
+                        <td style={{ padding: '0.8rem' }}>{ex.tipo || 'N/D'}</td>
+                        <td style={{ padding: '0.8rem' }}>
+                          <span style={{ 
+                            padding: '0.3rem 0.8rem', 
+                            borderRadius: '12px', 
+                            fontSize: '0.75rem', 
+                            fontWeight: 'bold',
+                            backgroundColor: ex.activo ? 'rgba(0, 255, 135, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            color: ex.activo ? '#00FF87' : '#ef4444'
+                          }}>
+                            {ex.activo ? 'Visible (Activo)' : 'Oculto'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '0.8rem', textAlign: 'center' }}>
+                          <button 
+                            onClick={() => handleToggleActivoEjercicio(ex.id, ex.activo)}
+                            style={{ 
+                              background: 'transparent', 
+                              color: ex.activo ? '#ef4444' : '#00FF87', 
+                              border: `1px solid ${ex.activo ? '#ef4444' : '#00FF87'}`, 
+                              padding: '0.3rem 0.8rem', 
+                              borderRadius: '6px', 
+                              cursor: 'pointer', 
+                              fontWeight: 'bold' 
+                            }}
+                          >
+                            {ex.activo ? 'Ocultar' : 'Mostrar'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#9CA3AF' }}>
+                        No hay ejercicios sincronizados. Da clic en "Sincronizar Ejercicios" para cargar los scripts de Python.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
           </div>
         )}
 

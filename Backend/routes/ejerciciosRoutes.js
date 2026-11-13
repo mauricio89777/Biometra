@@ -1,12 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const controller = require('../controllers/ejerciciosController');
+const ejerciciosController = require('../controllers/ejerciciosController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
-router.get('/', controller.listar);
-router.get('/:id', controller.obtener);
-router.post('/', authMiddleware, controller.crear);
-router.put('/:id', authMiddleware, controller.actualizar);
-router.delete('/:id', authMiddleware, controller.eliminar);
+//Rutas para ejerciciosRoutes.js
+router.post('/sincronizar', ejerciciosController.sincronizarEjerciciosPython);
+router.get('/admin/listar', ejerciciosController.listarEjerciciosAdmin);
+router.put('/admin/:id', ejerciciosController.actualizarEjercicioAdmin);
+
+
+
+router.get('/', async (req, res)=>{
+    try {
+        const prisma = require('../utils/prisma');
+        const ejerciciosActivos = await prisma.ejercicio.findMany({
+            where: { activo: true }
+        });
+        res.json(ejerciciosActivos);
+    } catch (error){
+        res.status(500).json({ error: 'Error al obtener ejercicios'});
+    }
+});
+
 
 module.exports = router;
