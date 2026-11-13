@@ -4,7 +4,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const prisma = require('./utils/prisma');
-const authRoutes =require('./routes/authRoutes');
+const authRoutes = require('./routes/authRoutes');
+const ejerciciosRoutes = require('./routes/ejerciciosRoutes');
 
 // Sin JWT_SECRET no se pueden firmar ni verificar tokens: mejor fallar de inmediato
 if (!process.env.JWT_SECRET) {

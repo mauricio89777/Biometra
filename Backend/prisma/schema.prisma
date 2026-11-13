@@ -67,6 +67,9 @@ model Ejercicio {
   descripcion    String?  @db.Text
   video_ayuda    String?  @db.VarChar(255)
 
+  script_key     String?   @unique @db.VarChar(50) // Llave de enlace con Python
+  activo         Boolean   @default(true)
+
   metricas  MetricaEjercicio[]
   videos    Video[]
   registros RegistroEjercicio[]
