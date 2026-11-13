@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const prisma = require('./utils/prisma');
+const authRoutes =require('./routes/authRoutes');
 
 // Sin JWT_SECRET no se pueden firmar ni verificar tokens: mejor fallar de inmediato
 if (!process.env.JWT_SECRET) {
@@ -21,10 +22,10 @@ app.get('/', (req, res) => {
   res.json({ mensaje: 'API Biometra funcionando' });
 });
 
-// ============================================
+
+
 // RUTAS
-// ============================================
-app.use('/', require('./routes/authRoutes'));            // POST /login
+app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/usuarios', require('./routes/usuariosRoutes'));
 app.use('/ejercicios', require('./routes/ejerciciosRoutes'));
 app.use('/videos', require('./routes/videosRoutes'));
@@ -33,9 +34,7 @@ app.use('/metricas', require('./routes/metricasRoutes'));
 app.use('/feedbacks', require('./routes/feedbacksRoutes'));
 app.use('/gimnasios', require('./routes/gimnasiosRoutes'));
 
-// ============================================
 // 404 y MANEJADOR GLOBAL DE ERRORES
-// ============================================
 app.use((req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });
 });
@@ -45,9 +44,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Error interno del servidor' });
 });
 
-// ============================================
 // ARRANQUE
-// ============================================
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, (err) => {
   if (err) return;

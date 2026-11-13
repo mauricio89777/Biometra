@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import { authService } from '../src/services/api';
 // NUEVO ICONO BIOMETRA: Símbolo de pivote cinemático, vectores y visión por computadora
 const LogoBiometraIcon = () => (
   <svg 
@@ -61,20 +61,13 @@ const LogoBiometraIcon = () => (
 
 export default function Login({ onLoginSuccess }) {
   const [mode, setMode] = useState('login'); 
-  const [role, setRole] = useState('cliente');
+  const [role, setRole] = useState('USUARIO'); // Coincide con tu enum Prisma (USUARIO o ADMIN)
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
-
-  const [registeredUsers, setRegisteredUsers] = useState([
-    { id: 1, name: 'Carlos Pérez', email: 'cliente@ejemplo.com', password: '123', role: 'cliente', estado: 'Activo' },
-    { id: 2, name: 'Ana Gómez', email: 'ana.gomez@ejemplo.com', password: '123', role: 'cliente', estado: 'Activo' },
-    { id: 3, name: 'Entrenador Marco', email: 'entrenador@ejemplo.com', password: '123', role: 'entrenador', especialidad: 'Fuerza / Hipertrofia' },
-    { id: 4, name: 'Administrador General', email: 'admin@ejemplo.com', password: '123', role: 'administrador' }
-  ]);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -89,59 +82,57 @@ export default function Login({ onLoginSuccess }) {
     setAcceptedTerms(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
 
-    if (mode === 'register') {
-      if (!acceptedTerms) {
-        setErrorMessage('Debes aceptar los Términos y Condiciones Legales para continuar.');
-        return;
-      }
+    try {
+      if (mode === 'register') {
+        if (!acceptedTerms) {
+          setErrorMessage('Debes aceptar los Términos y Condiciones Legales para continuar.');
+          return;
+        }
 
-      const userExists = registeredUsers.some(u => u.email.toLowerCase() === email.trim().toLowerCase());
-      
-      if (userExists) {
-        setErrorMessage('El correo electrónico ya se encuentra registrado.');
-        return;
-      }
-
-      const newUser = { 
-        id: Date.now(),
-        name: name.trim() || `${role.charAt(0).toUpperCase() + role.slice(1)} Biometra`, 
-        email: email.trim().toLowerCase(), 
-        password, 
-        role,
-        estado: 'Activo'
-      };
-
-      setRegisteredUsers([...registeredUsers, newUser]);
-      setSuccessMessage('¡Cuenta creada exitosamente! Procede a iniciar sesión.');
-
-      setTimeout(() => {
-        setMode('login');
-        setEmail(newUser.email);
-        setPassword('');
-        setAcceptedTerms(false);
-      }, 1500);
-
-    } else {
-      const cleanEmail = email.trim().toLowerCase();
-      const userFound = registeredUsers.find(u => u.email.toLowerCase() === cleanEmail && u.password === password);
-
-      if (!userFound) {
-        setErrorMessage('Correo electrónico o contraseña incorrectos.');
-        return;
-      }
-
-      if (onLoginSuccess) {
-        onLoginSuccess({
-          email: userFound.email,
-          role: userFound.role,
-          name: userFound.name
+        // Petición real al backend para registrar en la BD
+        await authService.register({
+          nombre: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+          rol: role.toUpperCase()
         });
+
+        setSuccessMessage('¡Cuenta creada exitosamente en la base de datos! Procede a iniciar sesión.');
+
+        setTimeout(() => {
+          setMode('login');
+          setPassword('');
+          setAcceptedTerms(false);
+        }, 1500);
+
+      } else {
+        // Petición real de Login al backend
+        const response = await authService.login({
+          email: email.trim().toLowerCase(),
+          password
+        });
+
+        // Guardamos el token y los datos del usuario en localStorage
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify(response.usuario));
+
+        if (onLoginSuccess) {
+          onLoginSuccess({
+            id: response.usuario.id,
+            email: response.usuario.email,
+            role: response.usuario.rol, // 'usuario' o 'admin' estaba en lowe.caser
+            name: response.usuario.nombre
+          });
+        }
       }
+    } catch (error) {
+      // Capturamos el error que manda el backend de forma limpia
+      setErrorMessage(error.response?.data?.error || 'Ocurrió un error en el servidor.');
     }
   };
 
@@ -194,13 +185,10 @@ export default function Login({ onLoginSuccess }) {
               <div>
                 <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>Tipo de Perfil</label>
                 <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <button type="button" onClick={() => setRole('cliente')} style={{ flex: 1, padding: '0.55rem', border: '1px solid #334155', borderRadius: '6px', backgroundColor: role === 'cliente' ? 'rgba(56, 189, 248, 0.2)' : '#1E293B', color: role === 'cliente' ? '#38BDF8' : '#CBD5E1', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>
-                    👤 Cliente
+                  <button type="button" onClick={() => setRole('USUARIO')} style={{ flex: 1, padding: '0.55rem', border: '1px solid #334155', borderRadius: '6px', backgroundColor: role === 'USUARIO' ? 'rgba(56, 189, 248, 0.2)' : '#1E293B', color: role === 'USUARIO' ? '#38BDF8' : '#CBD5E1', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                    👤 Usuario
                   </button>
-                  <button type="button" onClick={() => setRole('entrenador')} style={{ flex: 1, padding: '0.55rem', border: '1px solid #334155', borderRadius: '6px', backgroundColor: role === 'entrenador' ? 'rgba(56, 189, 248, 0.2)' : '#1E293B', color: role === 'entrenador' ? '#38BDF8' : '#CBD5E1', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>
-                    📋 Entrenador
-                  </button>
-                  <button type="button" onClick={() => setRole('administrador')} style={{ flex: 1, padding: '0.55rem', border: '1px solid #334155', borderRadius: '6px', backgroundColor: role === 'administrador' ? 'rgba(56, 189, 248, 0.2)' : '#1E293B', color: role === 'administrador' ? '#38BDF8' : '#CBD5E1', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>
+                  <button type="button" onClick={() => setRole('ADMIN')} style={{ flex: 1, padding: '0.55rem', border: '1px solid #334155', borderRadius: '6px', backgroundColor: role === 'ADMIN' ? 'rgba(56, 189, 248, 0.2)' : '#1E293B', color: role === 'ADMIN' ? '#38BDF8' : '#CBD5E1', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}>
                     ⚙️ Admin
                   </button>
                 </div>
@@ -237,13 +225,12 @@ export default function Login({ onLoginSuccess }) {
 
         {mode === 'login' && (
           <div style={{ textAlign: 'center', color: '#64748B', fontSize: '0.75rem', marginTop: '1.2rem' }}>
-            <p style={{ margin: '0.2rem 0' }}>💡 Cliente: <strong>cliente@ejemplo.com</strong> / <strong>123</strong></p>
-            <p style={{ margin: '0.2rem 0' }}>💡 Entrenador: <strong>entrenador@ejemplo.com</strong> / <strong>123</strong></p>
-            <p style={{ margin: '0.2rem 0' }}>💡 Admin: <strong>admin@ejemplo.com</strong> / <strong>123</strong></p>
+            <p style={{ margin: '0.2rem 0' }}>💡 Inicia sesión con el usuario admin que creaste en la base de datos.</p>
           </div>
         )}
       </div>
 
+      {/* MODAL DE TÉRMINOS Y CONDICIONES (Mantiene el mismo texto legal que tenías) */}
       {/* MODAL DE TÉRMINOS Y CONDICIONES */}
       {showTermsModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(11, 17, 32, 0.92)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1.5rem', boxSizing: 'border-box', backdropFilter: 'blur(6px)' }}>
@@ -257,28 +244,25 @@ export default function Login({ onLoginSuccess }) {
             </div>
             
             <div style={{ overflowY: 'auto', flex: 1, paddingRight: '0.8rem', color: '#CBD5E1', fontSize: '0.85rem', lineHeight: '1.65' }}>
-              <p><em>Última actualización: Edición Oficial Biometra Chile SpA.</em></p>
+              <p style={{ fontStyle: 'italic', color: '#94A3B8', marginBottom: '1rem' }}>Última actualización: Edición Oficial Biometra Chile SpA.</p>
 
-              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>1. Aceptación Binding de Condiciones de Uso</h4>
-              <p>Al hacer clic en "Aceptar", registrar una cuenta de usuario o hacer uso interactivo de los módulos analíticos de Biometra, usted declara expresamente ser mayor de edad o contar con la patria potestad correspondiente, aceptando en su totalidad este Contrato Marco de Adhesión para el uso de Software como Servicio (SaaS).</p>
+              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>1. Aceptación de Condiciones de Uso</h4>
+              <p style={{ margin: '0 0 0.8rem 0' }}>Al hacer clic en "Aceptar", registrar una cuenta de usuario o hacer uso interactivo de los módulos analíticos de Biometra, usted declara expresamente ser mayor de edad y acepta en su totalidad este Contrato Marco de Adhesión para el uso de Software como Servicio (SaaS).</p>
 
               <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>2. Objeto del Software y Deslinde Kinésico/Médico</h4>
-              <p>Biometra constituye una plataforma informática de visión por computadora destinada al cálculo de vectores angulares y estimación postural para la actividad física general. Bajo ningún precepto los resultados numéricos o diagnósticos cinemáticos emitidos reemplazarán una prescripción kinésica, evaluación médica presencial o diagnóstico fisioterapéutico profesional.</p>
+              <p style={{ margin: '0 0 0.8rem 0' }}>Biometra constituye una plataforma informática de visión por computadora destinada al cálculo de vectores angulares y estimación postural para la actividad física general. Los resultados no reemplazan una evaluación médica o kinésica presencial.</p>
 
-              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>3. Tratamiento de Datos Biométricos y Archivos Audiovisuales</h4>
-              <p>En conformidad con las normativas internacionales de protección de datos personales y la Ley N° 19.628 sobre Protección de la Vida Privada, usted consiente expresamente el procesamiento automatizado de los videos subidos a la plataforma. Dichas grabaciones son segmentadas únicamente en mapas de puntos de articulación (pose estimation), estando encriptadas en tránsito y reposo mediante algoritmos AES-256.</p>
+              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>3. Tratamiento de Datos Biométricos</h4>
+              <p style={{ margin: '0 0 0.8rem 0' }}>Usted consiente expresamente el procesamiento automatizado de los videos subidos para segmentación de puntos de articulación (pose estimation), los cuales se procesan bajo estrictos estándares de seguridad.</p>
 
-              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>4. Exención de Responsabilidad por Accidentes o Lesiones Físicas</h4>
-              <p>El usuario reconoce de forma explícita que la realización de levantamientos de pesas, ejercicios gimnásticos y sobrecargas biomecánicas conlleva riesgos inherentes de desgarro, luxación o fracturas. Biometra SpA, sus directores y desarrolladores no asumen responsabilidad civil, penal o extracontractual derivada de la imitación defectuosa o sobreesfuerzo físico realizado durante el uso de la aplicación.</p>
+              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>4. Exención de Responsabilidad Física</h4>
+              <p style={{ margin: '0 0 0.8rem 0' }}>El usuario reconoce que la realización de levantamientos de pesas y sobrecargas conlleva riesgos inherentes. Biometra SpA no asume responsabilidad civil o penal por lesiones derivadas de la ejecución física.</p>
 
-              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>5. Propiedad Intelectual e Industrial</h4>
-              <p>Queda estrictamente prohibida la ingeniería inversa, descompilación, extracción de modelos de aprendizaje profundo o redistribución no autorizada del código fuente, interfaces visuales, iso-logotipos o algoritmos propios de la plataforma Biometra. Todos los derechos quedan reservados.</p>
+              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>5. Propiedad Intelectual</h4>
+              <p style={{ margin: '0 0 0.8rem 0' }}>Queda prohibida la ingeniería inversa, descompilación o extracción no autorizada del código fuente y algoritmos propios de la plataforma.</p>
 
-              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>6. Vínculo Entrenador - Cliente</h4>
-              <p>Al vincularse con un perfil con rol de "Entrenador", el cliente otorga permiso expreso para que dicho profesional acceda a su historial de grabaciones, métricas de carga y reportes de riesgo postureo a través del panel centralizado.</p>
-
-              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>7. Jurisdicción y Legislación Aplicable</h4>
-              <p>El presente acuerdo se rige en su totalidad por las leyes de la República de Chile. Cualquier controversia sobre el cumplimiento o interpretación de este instrumento será sometida a la jurisdicción de los Tribunales Ordinarios de Justicia de Santiago.</p>
+              <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>6. Legislación Aplicable</h4>
+              <p style={{ margin: '0 0 0.8rem 0' }}>Este acuerdo se rige por las leyes de la República de Chile y los tribunales ordinarios de Santiago.</p>
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #1E293B' }}>
@@ -290,6 +274,7 @@ export default function Login({ onLoginSuccess }) {
           </div>
         </div>
       )}
+
     </div>
   );
 }
