@@ -144,12 +144,23 @@ def main():
                 "advertencias": advertencias,
             },
         }
+        
+        ruta_informe = None
         if args.informe:
-            ruta = os.path.join(args.out_dir, f"{base}_informe.html")
-            informe.escribir_informe(payload, ruta)
+            ruta_informe = os.path.abspath(
+                os.path.join(args.out_dir, f"{base}_informe.html")
+            )
+
+            informe.escribir_informe(payload, ruta_informe)
+
             print("\n" + informe.resumen_texto(payload) + "\n", file=sys.stderr)
-            log(f"Informe con video: {ruta}")
+            log(f"Informe con video: {ruta_informe}")
+
+        # Devolver la ruta del informe al backend.
+        payload["informe"] = ruta_informe
+
         emit(payload)
+
     except SystemExit:
         raise
     except Exception as e:

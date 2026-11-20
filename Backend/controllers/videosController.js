@@ -5,26 +5,36 @@ const path = require('path');
 
 //para los informes
 const fs = require('fs');
-
-//se instalo multer para recibir archivos multipart/form data
-
-
-// Obtener la ruta del entorno virtual de Python según el sistema operativo
+//multer multidata
+// Obtener la ruta del entorno virtual de Python según el entorno, window,linux,docker
 const obtenerPythonPath = () => {
   const rutaVenv = path.join(__dirname, '../../analisis/venv');
 
-  const ejecutable = process.platform === 'win32'
-    ? path.join(rutaVenv, 'Scripts', 'python.exe')
-    : path.join(rutaVenv, 'bin', 'python');
+  // 1. Docker: utiliza la ruta configurada en docker-compose.yml
+  // 2. Windows: utiliza Scripts/python.exe
+  // 3. Linux local: utiliza bin/python
+  const rutasPosibles = [
+    process.env.PYTHON_BIN,
+    process.platform === 'win32'
+      ? path.join(rutaVenv, 'Scripts', 'python.exe')
+      : path.join(rutaVenv, 'bin', 'python')
+  ].filter(Boolean);
 
-  if (!fs.existsSync(ejecutable)) {
+  const ejecutable = rutasPosibles.find(ruta =>
+    fs.existsSync(ruta)
+  );
+
+  if (!ejecutable) {
     throw new Error(
-      `No se encontró Python en: ${ejecutable}. Verifica que hayas creado el entorno virtual.`
+      `No se encontró Python. Rutas comprobadas: ${rutasPosibles.join(', ')}`
     );
   }
 
+  console.log(`[PYTHON] Ejecutable seleccionado: ${ejecutable}`);
+
   return ejecutable;
 };
+
 
 // Ruta del script principal de análisis
 const scriptPath = path.resolve(__dirname, '../../analisis/main.py');
@@ -118,12 +128,27 @@ exports.crear = async (req, res) => {
 };
 
 exports.listar = ah(async (req, res) => {
-  const { usuario_id } = req.query;
+  const usuarioId = Number(req.usuario?.id);
+
+  if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
+    return res.status(401).json({
+      error: 'Usuario no autenticado'
+    });
+  }
+
   const videos = await prisma.video.findMany({
-    where: { ...(usuario_id && { usuario_id: Number(usuario_id) }) },
-    include: { ejercicio: true }
+    where: {
+      usuario_id: usuarioId
+    },
+    include: {
+      ejercicio: true
+    },
+    orderBy: {
+      fecha_carga: 'desc'
+    }
   });
-  res.json(videos);
+
+  return res.json(videos);
 });
 
 exports.obtener = ah(async (req, res) => {
@@ -158,8 +183,9 @@ exports.eliminar = async (req, res) => {
 
 
 
-exports.analizar = async (req, res) => { // <-- 1. Agregado async aquí
-  // 1. Validar que Multer recibió el video
+
+exports.analizar = async (req, res) => {
+  // 1. Comprobar que Multer recibió el video
   if (!req.file) {
     return res.status(400).json({
       estado: 'error',
@@ -167,140 +193,365 @@ exports.analizar = async (req, res) => { // <-- 1. Agregado async aquí
     });
   }
 
-  // 2. Obtener el ejercicio seleccionado
-  const { exercise, usuario_id } = req.body; // Asegúrate de recibir usuario_id o tómalo del req.user si usas JWT
+  // 2. Obtener los datos enviados por el frontend
+  const { exercise, registro_ejercicio_id } = req.body;
 
   if (!exercise) {
     return res.status(400).json({
       estado: 'error',
-      error: 'Falta especificar el parámetro "exercise"'
+      error: 'Falta especificar el ejercicio'
     });
   }
 
-  // 3. Obtener rutas e identificador
-  const videoPath = req.file.path;
-  const jobId = `job_${Date.now()}`;
+  const usuarioId = Number(req.usuario?.id);
+  const registroId = Number(registro_ejercicio_id);
 
-  const scriptPath = path.resolve(
-    __dirname,
-    '../../analisis/main.py'
-  );
+  if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
+    return res.status(401).json({
+      estado: 'error',
+      error: 'Usuario no autenticado'
+    });
+  }
 
-  // 4. Obtener Python según el sistema operativo
-  let pythonPath;
+  if (!Number.isInteger(registroId) || registroId <= 0) {
+    return res.status(400).json({
+      estado: 'error',
+      error: 'El registro de ejercicio es inválido'
+    });
+  }
 
   try {
-    pythonPath = obtenerPythonPath();
-  } catch (error) {
-    return res.status(500).json({
-      estado: 'error',
-      error: error.message
+    // 3. Buscar el ejercicio del catálogo mediante su script_key
+    const ejercicioDb = await prisma.ejercicio.findUnique({
+      where: { script_key: exercise }
     });
-  }
 
-  console.log('[UPLOAD] Video recibido en:', videoPath);
-  console.log(`[PYTHON] Ejecutando análisis para el ejercicio: ${exercise}`);
-
-  // 5. Ejecutar análisis
-  const args = [
-    scriptPath,
-    videoPath,
-    '--exercise',
-    exercise,
-    '--job-id',
-    jobId,
-    '--informe'
-  ];
-
-  const proceso = spawn(pythonPath, args);
-
-  let salida = '';
-  let errores = '';
-
-  proceso.stdout.on('data', (data) => {
-    salida += data.toString();
-  });
-
-  proceso.stderr.on('data', (data) => {
-    errores += data.toString();
-    console.log('[PYTHON DEBUG]', data.toString().trim());
-  });
-
-  proceso.on('error', (error) => {
-    console.error('[PYTHON ERROR]', error);
-
-    if (!res.headersSent) {
-      return res.status(500).json({
+    if (!ejercicioDb) {
+      return res.status(404).json({
         estado: 'error',
-        error: 'No se pudo iniciar el proceso de Python'
+        error: 'No se encontró el ejercicio seleccionado'
       });
     }
-  });
 
-  // Cuando termina el proceso
-  proceso.on('close', async (codigo) => { // <-- 2. Agregado async aquí también
-    console.log(`[PYTHON] Proceso terminado con código ${codigo}`);
+    // 4. Buscar el registro de entrenamiento
+    const registro = await prisma.registroEjercicio.findUnique({
+      where: { id: registroId },
+      include: {
+        sesion: {
+          select: { usuario_id: true }
+        },
+        ejercicio: {
+          select: { id: true }
+        }
+      }
+    });
 
-    if (codigo !== 0) {
-      return res.status(500).json({
+    if (!registro) {
+      return res.status(404).json({
         estado: 'error',
-        error: errores || 'Python terminó con un error'
+        error: 'No se encontró el registro de entrenamiento'
       });
     }
+
+    // 5. Verificar que el registro pertenece al usuario autenticado
+    if (registro.sesion.usuario_id !== usuarioId) {
+      return res.status(403).json({
+        estado: 'error',
+        error: 'No tienes permiso para analizar este registro'
+      });
+    }
+
+    // 6. Verificar que el ejercicio del video coincide con el registrado
+    if (registro.ejercicio_id !== ejercicioDb.id) {
+      return res.status(400).json({
+        estado: 'error',
+        error: 'El ejercicio seleccionado no coincide con el registro de entrenamiento'
+      });
+    }
+
+    // 7. Preparar la ejecución de Python
+    const videoPath = req.file.path;
+    const jobId = `job_${Date.now()}`;
+
+    let pythonPath;
 
     try {
-      const resultado = JSON.parse(salida);
+      pythonPath = obtenerPythonPath();
+    } catch (error) {
+      console.error('[PYTHON]', error.message);
 
-      // --- 3. GUARDAR EN BASE DE DATOS USANDO PRISMA ---
-      // Buscamos el ejercicio en la BD usando la script_key que envió el cliente
-      const ejercicioDb = await prisma.ejercicio.findUnique({
-        where: { script_key: exercise }
+      return res.status(500).json({
+        estado: 'error',
+        error: error.message
       });
+    }
 
-      if (ejercicioDb) {
-        await prisma.video.create({
+    console.log('[UPLOAD] Video recibido:', videoPath);
+    console.log('[ANALISIS] Usuario:', usuarioId);
+    console.log('[ANALISIS] Registro:', registroId);
+    console.log('[ANALISIS] Ejercicio:', exercise);
+
+    // 8. Ejecutar el análisis de Python
+    const args = [
+      scriptPath,
+      videoPath,
+      '--exercise',
+      exercise,
+      '--job-id',
+      jobId,
+      '--informe'
+    ];
+
+    const proceso = spawn(pythonPath, args);
+
+    let salida = '';
+    let errores = '';
+
+    proceso.stdout.on('data', (data) => {
+      salida += data.toString();
+    });
+
+    proceso.stderr.on('data', (data) => {
+      const mensaje = data.toString();
+      errores += mensaje;
+      console.log('[PYTHON DEBUG]', mensaje.trim());
+    });
+
+    proceso.on('error', (error) => {
+      console.error('[PYTHON ERROR]', error);
+
+      if (!res.headersSent) {
+        return res.status(500).json({
+          estado: 'error',
+          error: 'No se pudo iniciar el proceso de Python'
+        });
+      }
+    });
+
+    // 9. Procesar el resultado cuando Python termine
+    proceso.on('close', async (codigo) => {
+      console.log(`[PYTHON] Proceso terminado con código ${codigo}`);
+
+      if (res.headersSent) return;
+
+      if (codigo !== 0) {
+        return res.status(500).json({
+          estado: 'error',
+          error: errores || 'Python terminó con un error'
+        });
+      }
+
+      try {
+
+        const resultado = JSON.parse(salida);
+
+        const datosAnalisis = resultado.analisis;
+
+        if (resultado.estado !== 'completado' || !datosAnalisis) {
+          return res.status(500).json({
+            estado: 'error',
+            error: resultado.error || 'Python no devolvió un análisis válido'
+          });
+        }
+
+        // 1. Obtener la puntuación global.
+        const puntuacionGlobal = Number(
+          datosAnalisis.puntuacion?.global
+        );
+
+        // 2. Convertir las métricas de Python al formato de Prisma.
+        const metricasPython = datosAnalisis.metricas?.por_metrica || {};
+
+        const metricasDB = Object.entries(metricasPython).map(
+          ([nombre, metrica]) => ({
+            tipo_metrica: nombre.slice(0, 50),
+            valor: Number.isFinite(Number(metrica.media))
+              ? Number(metrica.media)
+              : null
+          })
+        );
+
+        // 3. Convertir el feedback.
+        const feedbackDB = (datosAnalisis.feedback || []).map((f) => ({
+          observacion: (
+            `${f.nivel ? `[${f.nivel}] ` : ''}${f.mensaje || ''}`
+          ).slice(0, 500),
+
+          recomendacion: f.correccion
+            ? String(f.correccion).slice(0, 500)
+            : null
+        }));
+
+        // 4. Convertir las repeticiones.
+        const repeticionesDB = (datosAnalisis.repeticiones || []).map((r) => ({
+          numero_rep: r.indice ?? r.numero ?? 0,
+          tiempo_inicio: r.inicio_s ?? null,
+          tiempo_fin: r.fin_s ?? null,
+          calificacion: r.puntuacion ?? null
+        }));
+
+        // 5. Guardar video y análisis relacionados.
+        const videoGuardado = await prisma.video.create({
           data: {
-            usuario_id: Number(usuario_id || 1), // Reemplaza por req.user.id si manejas autenticación
+            usuario_id: usuarioId,
             ejercicio_id: ejercicioDb.id,
+            registro_ejercicio_id: registro.id,
+
             url_archivo: videoPath,
-            url_video_procesado: resultado.video_procesado_path || null,
-            url_informe: resultado.informe_path || null,
+            url_video_procesado: resultado.video_procesado || null,
+            url_informe: resultado.informe || null,
+
             estado: 'PROCESADO',
+
             analisis: {
               create: {
-                puntuacion: resultado.puntuacion || 0,
+                puntuacion: Number.isFinite(puntuacionGlobal)
+                  ? puntuacionGlobal
+                  : null,
+
                 estado: 'COMPLETADO',
-                // Guardamos las métricas que arroje el JSON de Python de forma dinámica
+
                 metricas: {
-                  create: (resultado.metricas || []).map(m => ({
-                    tipo_metrica: m.nombre || 'general',
-                    valor: m.valor || 0
-                  }))
+                  create: metricasDB
                 },
-                // Si el script te devuelve repeticiones, las guardamos también
+
+                feedbacks: {
+                  create: feedbackDB
+                },
+
                 repeticiones: {
-                  create: (resultado.repeticiones || []).map(r => ({
-                    numero_rep: r.numero || 0,
-                    tiempo_inicio: r.inicio || 0,
-                    tiempo_fin: r.fin || 0,
-                    calificacion: r.calificacion || 0
-                  }))
+                  create: repeticionesDB
                 }
+              }
+            }
+          },
+
+          include: {
+            analisis: {
+              include: {
+                metricas: true,
+                feedbacks: true,
+                repeticiones: true
               }
             }
           }
         });
-      }
-      // ------------------------------------------------
 
-      return res.json(resultado);
-    } catch (error) {
-      console.error('[DB ERROR]', error);
-      return res.status(500).json({
-        estado: 'error',
-        error: 'Python devolvió un JSON pero ocurrió un error al guardarlo en la base de datos',
-        detalle: error.message
+        console.log('[DB] Video y análisis guardados:', videoGuardado.id);
+
+        // 6. Responder al frontend.
+        return res.json({
+          ...resultado,
+          video_id: videoGuardado.id,
+          registro_ejercicio_id: registro.id,
+          datos_guardados: videoGuardado
+        });
+
+
+      } catch (error) {
+        console.error('[DB ERROR]', error);
+
+        return res.status(500).json({
+          estado: 'error',
+          error: 'Ocurrió un error al guardar el análisis en la base de datos',
+          detalle: error.message
+        });
+      }
+    });
+
+  } catch (error) {
+    console.error('[ANALISIS ERROR]', error);
+
+    return res.status(500).json({
+      estado: 'error',
+      error: 'No se pudo procesar la solicitud',
+      detalle: error.message
+    });
+  }
+};
+
+
+
+
+exports.servirArchivo = async (req, res) => {
+  try {
+    const videoId = Number(req.params.id);
+    const usuarioId = Number(req.usuario?.id);
+    const tipo = req.params.tipo;
+
+    if (!Number.isInteger(videoId) || videoId <= 0) {
+      return res.status(400).json({
+        error: 'ID de video inválido'
       });
     }
-  });
+
+    if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
+      return res.status(401).json({
+        error: 'Usuario no autenticado'
+      });
+    }
+
+    const camposPermitidos = {
+      original: 'url_archivo',
+      procesado: 'url_video_procesado',
+      informe: 'url_informe'
+    };
+
+    const campo = camposPermitidos[tipo];
+
+    if (!campo) {
+      return res.status(400).json({
+        error: 'Tipo de archivo no válido'
+      });
+    }
+
+    const video = await prisma.video.findUnique({
+      where: {
+        id: videoId
+      },
+      select: {
+        usuario_id: true,
+        url_archivo: true,
+        url_video_procesado: true,
+        url_informe: true
+      }
+    });
+
+    if (!video) {
+      return res.status(404).json({
+        error: 'Video no encontrado'
+      });
+    }
+
+    if (video.usuario_id !== usuarioId) {
+      return res.status(403).json({
+        error: 'No tienes permiso para acceder a este archivo'
+      });
+    }
+
+    const archivo = video[campo];
+
+    if (!archivo || !fs.existsSync(archivo)) {
+      return res.status(404).json({
+        error: 'Archivo no encontrado en el servidor'
+      });
+    }
+
+    return res.sendFile(path.resolve(archivo), (error) => {
+      if (error && !res.headersSent) {
+        console.error('Error al enviar archivo:', error);
+
+        res.status(500).json({
+          error: 'No se pudo entregar el archivo'
+        });
+      }
+    });
+
+  } catch (error) {
+    console.error('Error al servir archivo:', error);
+
+    return res.status(500).json({
+      error: 'Error al acceder al archivo'
+    });
+  }
 };

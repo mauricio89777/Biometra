@@ -1,13 +1,49 @@
 import React from 'react';
 
-export default function AnalisisForm({ ejercicio, videoUsuario, onVideoChange, onSubmit, procesando, error }) {
+export default function AnalisisForm({
+  ejercicio,
+  registroSeleccionado,
+  videoUsuario,
+  onVideoChange,
+  onSubmit,
+  procesando,
+  error
+}) {
   return (
     <form onSubmit={onSubmit}>
-      <div style={{ backgroundColor: '#1C2541', borderRadius: '20px', padding: '2.5rem', border: '2px dashed #00B4D8', textAlign: 'center' }}>
-        
-        <h3 style={{ color: '#00B4D8' }}>Analizar: {ejercicio.nombre}</h3>
+      <div style={{
+        backgroundColor: '#1C2541',
+        borderRadius: '20px',
+        padding: '2.5rem',
+        border: '2px dashed #00B4D8',
+        textAlign: 'center'
+      }}>
+
+        <h3 style={{ color: '#00B4D8' }}>
+          Analizar: {ejercicio.nombre}
+        </h3>
+
+        {registroSeleccionado && (
+          <div style={{
+            backgroundColor: '#0B132B',
+            borderRadius: '10px',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            border: '1px solid #3A506B'
+          }}>
+            <p style={{ color: '#06D6A0', margin: 0 }}>
+              Registro de entrenamiento seleccionado
+            </p>
+
+            <p style={{ color: '#CBD5E1', marginBottom: 0 }}>
+              Registro #{registroSeleccionado.id}
+            </p>
+          </div>
+        )}
+
         <p style={{ color: '#94A3B8', fontSize: '0.9rem' }}>
-          El video será procesado utilizando la configuración biomecánica correspondiente al ejercicio seleccionado.
+          El video será procesado utilizando la configuración
+          biomecánica correspondiente al ejercicio seleccionado.
         </p>
 
         <input
@@ -38,14 +74,20 @@ export default function AnalisisForm({ ejercicio, videoUsuario, onVideoChange, o
           <div style={{ marginTop: '1.5rem', color: '#06D6A0' }}>
             <p>Video seleccionado:</p>
             <strong>{videoUsuario.name}</strong>
-            <p style={{ fontSize: '0.8rem' }}>{(videoUsuario.size / (1024 * 1024)).toFixed(2)} MB</p>
+            <p style={{ fontSize: '0.8rem' }}>
+              {(videoUsuario.size / (1024 * 1024)).toFixed(2)} MB
+            </p>
           </div>
         )}
 
         <div style={{ marginTop: '2rem' }}>
           <button
             type="submit"
-            disabled={procesando || !videoUsuario}
+            disabled={
+              procesando ||
+              !videoUsuario ||
+              !registroSeleccionado
+            }
             style={{
               backgroundColor: '#06D6A0',
               color: '#0B132B',
@@ -54,19 +96,32 @@ export default function AnalisisForm({ ejercicio, videoUsuario, onVideoChange, o
               borderRadius: '10px',
               fontWeight: '900',
               cursor: procesando ? 'wait' : 'pointer',
-              opacity: procesando || !videoUsuario ? 0.5 : 1
+              opacity:
+                procesando || !videoUsuario || !registroSeleccionado
+                  ? 0.5
+                  : 1
             }}
           >
-            {procesando ? 'Procesando movimiento...' : 'Empezar análisis de técnica'}
+            {procesando
+              ? 'Procesando movimiento...'
+              : 'Empezar análisis de técnica'}
           </button>
         </div>
 
         {procesando && (
-          <p style={{ color: '#00B4D8', marginTop: '1.5rem' }}>Procesando video con Python y MediaPipe...</p>
+          <p style={{ color: '#00B4D8', marginTop: '1.5rem' }}>
+            Procesando video con Python y MediaPipe...
+          </p>
         )}
 
         {error && (
-          <div style={{ marginTop: '1.5rem', padding: '1rem', borderRadius: '8px', color: '#FF6B6B', backgroundColor: 'rgba(255, 107, 107, 0.1)' }}>
+          <div style={{
+            marginTop: '1.5rem',
+            padding: '1rem',
+            borderRadius: '8px',
+            color: '#FF6B6B',
+            backgroundColor: 'rgba(255, 107, 107, 0.1)'
+          }}>
             <strong>Error:</strong> {error}
           </div>
         )}

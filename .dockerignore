@@ -1,0 +1,38 @@
+
+# Git
+.git
+.gitignore
+
+# Variables sensibles
+.env
+.env.*
+
+# Node
+node_modules
+**/node_modules
+npm-debug.log*
+*.log
+
+# Python
+venv
+.venv
+**/venv
+**/.venv
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+
+# Frontend
+frontend/dist
+frontend/build
+
+# Archivos generados
+**/output
+**/outputs
+**/.pytest_cache
+
+# Entornos y editores
+.vscode
+.idea
+.DS_Store

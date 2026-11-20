@@ -34,23 +34,23 @@ enum EstadoAnalisis {
 // USUARIO
 // ─────────────────────────────────────────────
 model Usuario {
-  id                Int       @id @default(autoincrement())
-  nombre            String    @db.VarChar(100)
-  email             String    @unique @db.VarChar(150)
-  password_hash     String    @db.VarChar(255)
-  rol               Rol       @default(USUARIO)
+  id            Int    @id @default(autoincrement())
+  nombre        String @db.VarChar(100)
+  email         String @unique @db.VarChar(150)
+  password_hash String @db.VarChar(255)
+  rol           Rol    @default(USUARIO)
 
-  foto_perfil       String?   @db.VarChar(255)
-  foto_portada      String?   @db.VarChar(255)
-  fecha_nacimiento  DateTime?
-  peso              Float?
-  altura            Float?
-  genero            String?   @db.VarChar(20)
+  foto_perfil      String?   @db.VarChar(255)
+  foto_portada     String?   @db.VarChar(255)
+  fecha_nacimiento DateTime?
+  peso             Float?
+  altura           Float?
+  genero           String?   @db.VarChar(20)
 
-  total_sesiones    Int       @default(0)
+  total_sesiones Int @default(0)
 
-  fecha_registro    DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  fecha_registro DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   videos             Video[]
   sesiones           Sesion[]
@@ -60,15 +60,15 @@ model Usuario {
 }
 
 model Ejercicio {
-  id             Int      @id @default(autoincrement())
-  nombre         String   @db.VarChar(100)
-  grupo_muscular String?  @db.VarChar(50)
-  tipo           String?  @db.VarChar(50)
-  descripcion    String?  @db.Text
-  video_ayuda    String?  @db.VarChar(255)
+  id             Int     @id @default(autoincrement())
+  nombre         String  @db.VarChar(100)
+  grupo_muscular String? @db.VarChar(50)
+  tipo           String? @db.VarChar(50)
+  descripcion    String? @db.Text
+  video_ayuda    String? @db.VarChar(255)
 
-  script_key     String?   @unique @db.VarChar(50) // Llave de enlace con Python
-  activo         Boolean   @default(true)
+  script_key String? @unique @db.VarChar(50) // Llave de enlace con Python
+  activo     Boolean @default(true)
 
   metricas  MetricaEjercicio[]
   videos    Video[]
@@ -89,18 +89,20 @@ model MetricaEjercicio {
 }
 
 model Video {
-  id                  Int         @id @default(autoincrement())
-  usuario_id          Int
-  ejercicio_id        Int
-  url_archivo         String      @db.VarChar(255)
-  url_video_procesado String?     @db.VarChar(255)
-  url_landmarks       String?     @db.VarChar(255)
-  url_informe         String?     @db.VarChar(255)
-  fecha_carga         DateTime    @default(now())
-  estado              EstadoVideo @default(PENDIENTE)
+  id                    Int         @id @default(autoincrement())
+  usuario_id            Int
+  ejercicio_id          Int
+  registro_ejercicio_id Int?
+  url_archivo           String      @db.VarChar(255)
+  url_video_procesado   String?     @db.VarChar(255)
+  url_landmarks         String?     @db.VarChar(255)
+  url_informe           String?     @db.VarChar(255)
+  fecha_carga           DateTime    @default(now())
+  estado                EstadoVideo @default(PENDIENTE)
 
-  usuario   Usuario   @relation(fields: [usuario_id],   references: [id], onDelete: Cascade, map: "fk_video_usuario")
-  ejercicio Ejercicio @relation(fields: [ejercicio_id], references: [id], onDelete: Cascade, map: "fk_video_ejercicio")
+  usuario   Usuario            @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_video_usuario")
+  ejercicio Ejercicio          @relation(fields: [ejercicio_id], references: [id], onDelete: Cascade, map: "fk_video_ejercicio")
+  registro  RegistroEjercicio? @relation(fields: [registro_ejercicio_id], references: [id], onDelete: SetNull, map: "fk_video_registro")
   analisis  Analisis[]
 
   @@map("VIDEO")
@@ -154,26 +156,27 @@ model Repeticion {
 }
 
 model Sesion {
-  id           Int       @id @default(autoincrement())
+  id           Int                 @id @default(autoincrement())
   usuario_id   Int
-  fecha        DateTime  @default(now())
-  notas        String?   @db.Text
+  fecha        DateTime            @default(now())
+  notas        String?             @db.Text
   duracion_min Int?
-  usuario      Usuario   @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_sesion_usuario")
+  usuario      Usuario             @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_sesion_usuario")
   registros    RegistroEjercicio[]
 
   @@map("SESION")
 }
 
 model RegistroEjercicio {
-  id           Int       @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   sesion_id    Int
   ejercicio_id Int
-  notas        String?   @db.VarChar(255)
+  notas        String? @db.VarChar(255)
 
-  sesion    Sesion    @relation(fields: [sesion_id],    references: [id], onDelete: Cascade, map: "fk_registro_sesion")
+  sesion    Sesion    @relation(fields: [sesion_id], references: [id], onDelete: Cascade, map: "fk_registro_sesion")
   ejercicio Ejercicio @relation(fields: [ejercicio_id], references: [id], onDelete: Cascade, map: "fk_registro_ejercicio")
   series    Serie[]
+  videos    Video[]
 
   @@map("REGISTRO_EJERCICIO")
 }
@@ -182,7 +185,8 @@ model Serie {
   id                    Int               @id @default(autoincrement())
   registro_ejercicio_id Int
   numero_serie          Int
-  repeticiones          Int
+  repeticiones          Int?
+  duracion_segundos     Int?
   peso                  Float?
   registro              RegistroEjercicio @relation(fields: [registro_ejercicio_id], references: [id], onDelete: Cascade, map: "fk_serie_registro")
 
@@ -213,7 +217,7 @@ model GimnasioFavorito {
   gimnasio_id Int
   fecha_add   DateTime @default(now())
 
-  usuario  Usuario  @relation(fields: [usuario_id],  references: [id], onDelete: Cascade, map: "fk_fav_usuario")
+  usuario  Usuario  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, map: "fk_fav_usuario")
   gimnasio Gimnasio @relation(fields: [gimnasio_id], references: [id], onDelete: Cascade, map: "fk_fav_gimnasio")
 
   @@unique([usuario_id, gimnasio_id])

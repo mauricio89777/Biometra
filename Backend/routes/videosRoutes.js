@@ -23,13 +23,15 @@ const upload = multer({ storage });
 //Ruta para obter los diferentes ejercicios 
 router.get('/ejercicios', controller.listarEjercicios);
 
+router.get('/:id/archivo/:tipo', authMiddleware, controller.servirArchivo);
+
 //ruta para trasmitir resultados python
-router.get('/stream', controller.streamVideo);
+//router.get('/stream', controller.streamVideo);
 
 router.get('/', controller.listar);
 router.get('/:id', controller.obtener);
 
-router.post('/analizar', upload.single('video'), controller.analizar);
+router.post('/analizar',authMiddleware ,upload.single('video'), controller.analizar);
 
 router.post('/', authMiddleware, controller.crear);
 router.put('/:id', authMiddleware, controller.actualizar);
