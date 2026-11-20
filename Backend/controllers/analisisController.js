@@ -1,6 +1,37 @@
 const prisma = require('../utils/prisma');
 const { ah, manejarError } = require('../utils/errores');
 
+const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+
+// Ruta del entorno virtual local
+const rutaVenv = path.resolve(__dirname, '../../analisis/venv');
+
+// Seleccionar Python según el entorno
+const obtenerPythonPath = () => {
+  const rutasPosibles = [
+    process.env.PYTHON_BIN,
+    process.platform === 'win32'
+      ? path.join(rutaVenv, 'Scripts', 'python.exe')
+      : path.join(rutaVenv, 'bin', 'python'),
+    'python3'
+  ].filter(Boolean);
+
+  const ejecutable = rutasPosibles.find(ruta =>
+    ruta === 'python3' || fs.existsSync(ruta)
+  );
+
+  if (!ejecutable) {
+    throw new Error(
+      `No se encontró Python. Rutas comprobadas: ${rutasPosibles.join(', ')}`
+    );
+  }
+
+  return ejecutable;
+};
+
+const SCRIPT_PATH = path.resolve(__dirname, '../../analisis/main.py');
 exports.crear = async (req, res) => {
   try {
     const analisis = await prisma.analisis.create({ data: req.body });

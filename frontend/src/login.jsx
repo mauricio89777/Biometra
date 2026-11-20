@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { authService } from '../src/services/api';
+import { authService } from '../src/services/authService';
+
 // NUEVO ICONO BIOMETRA: Símbolo de pivote cinemático, vectores y visión por computadora
 const LogoBiometraIcon = () => (
   <svg 
