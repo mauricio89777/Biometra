@@ -1,6 +1,6 @@
 // dotenv SIEMPRE primero, antes de cualquier otro require
 require('dotenv').config();
-
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const prisma = require('./utils/prisma');
@@ -15,7 +15,14 @@ if (!process.env.JWT_SECRET) {
 
 const app = express();
 
-app.use(cors());
+
+// Permitir acceder a los archivos subidos
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.use(cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+}));
 app.use(express.json());
 
 // Ruta de prueba rápida
@@ -34,6 +41,7 @@ app.use('/analisis', require('./routes/analisisRoutes'));
 app.use('/metricas', require('./routes/metricasRoutes'));
 app.use('/feedbacks', require('./routes/feedbacksRoutes'));
 app.use('/gimnasios', require('./routes/gimnasiosRoutes'));
+app.use('/sesiones', require('./routes/sesionesRoutes'));
 
 // 404 y MANEJADOR GLOBAL DE ERRORES
 app.use((req, res) => {

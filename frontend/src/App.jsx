@@ -115,7 +115,7 @@ export default function App() {
   // RUTAS INTERNAS NAVEGABLES
   if (currentView === 'perfil') return <Perfil user={currentUser} onLogout={handleLogout} onNavigate={setCurrentView} />;
   if (currentView === 'gps') return <Gps onNavigate={setCurrentView} />;
-  if (currentView === 'ejercicios') return <Ejercicios onNavigate={setCurrentView} />;
+  if (currentView === 'ejercicios'){ return( <Ejercicios user={currentUser} onNavigate={setCurrentView} />);}
  
   return (
     <div className="app-container">

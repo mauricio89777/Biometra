@@ -57,8 +57,12 @@ const LogoBiometraIcon = () => (
   </svg>
 );
 
-export default function Ejercicios({ onNavigate }) {
-  
+export default function Ejercicios({ user, onNavigate }) {
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';  
+  const [registrosEjercicio, setRegistrosEjercicio] = useState([]);
+  const [registroSeleccionadoId, setRegistroSeleccionadoId] = useState('');
+  const [cargandoRegistros, setCargandoRegistros] = useState(false);
   const [bancoEjercicios, setBancoEjercicios] = useState([]);
   const [ejercicioSeleccionado, setEjercicioSeleccionado] = useState(null);
   const [videoUsuario, setVideoUsuario] = useState(null);
@@ -67,7 +71,7 @@ export default function Ejercicios({ onNavigate }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:3000/ejercicios')
+    fetch(`${API_URL}/ejercicios`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -88,12 +92,81 @@ export default function Ejercicios({ onNavigate }) {
       .catch((err) => console.error('Error cargando ejercicios:', err));
   }, []);
 
+
+  useEffect(() => {
+    const cargarRegistrosUsuario = async () => {
+      if (!user?.id) {
+        setRegistrosEjercicio([]);
+        return;
+      }
+
+      setCargandoRegistros(true);
+
+      try {
+        const token = localStorage.getItem('token');
+
+        const response = await fetch(
+          `${API_URL}/sesiones/usuario/${user.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error || 'No se pudo cargar tu historial de entrenamiento.'
+          );
+        }
+
+        if (!Array.isArray(data)) {
+          throw new Error('La respuesta del historial no tiene un formato válido.');
+        }
+
+        // Convertimos las sesiones en una lista de registros individuales.
+        const registros = data.flatMap((sesion) =>
+          (sesion.registros || []).map((registro) => ({
+            ...registro,
+            fechaSesion: sesion.fecha
+          }))
+        );
+
+        setRegistrosEjercicio(registros);
+
+      } catch (err) {
+        console.error('Error cargando registros:', err);
+        setRegistrosEjercicio([]);
+        setError(err.message || 'No se pudo cargar el historial.');
+      } finally {
+        setCargandoRegistros(false);
+      }
+    };
+
+    cargarRegistrosUsuario();
+  }, [user?.id]);
+
+
+
+  const registrosCompatibles = registrosEjercicio.filter(
+    (registro) =>
+      Number(registro.ejercicio_id) === Number(ejercicioSeleccionado?.id)
+  );
+
+  const registroSeleccionado = registrosCompatibles.find(
+    (registro) => String(registro.id) === String(registroSeleccionadoId)
+  );
+
   const seleccionarEjercicioPorKey = (scriptKey) => {
     const seleccionado = bancoEjercicios.find(
       (ej) => ej.script_key === scriptKey
     );
     if (!seleccionado) return;
+
     setEjercicioSeleccionado(seleccionado);
+    setRegistroSeleccionadoId('');
     setResultado(null);
     setError(null);
   };
@@ -114,12 +187,21 @@ export default function Ejercicios({ onNavigate }) {
     setError(null);
   };
 
-
- const iniciarAnalisis = async (e) => {
+  const iniciarAnalisis = async (e) => {
     e.preventDefault();
 
     if (!videoUsuario) {
       setError('Primero debes seleccionar un video.');
+      return;
+    }
+
+    if (!registroSeleccionado) {
+      setError('Primero debes seleccionar un registro de entrenamiento.');
+      return;
+    }
+
+    if (!user?.id) {
+      setError('No se pudo identificar al usuario autenticado.');
       return;
     }
 
@@ -128,23 +210,32 @@ export default function Ejercicios({ onNavigate }) {
     setError(null);
 
     const formData = new FormData();
+
     formData.append('video', videoUsuario);
-    formData.append('exercise', ejercicioSeleccionado.script_key); // Vinculación mediante script_key
-    formData.append('usuario_id', 1); // ID de usuario por defecto para pruebas
+    formData.append('exercise', ejercicioSeleccionado.script_key);
+    formData.append('registro_ejercicio_id', registroSeleccionado.id);
 
     try {
-      const response = await fetch('http://localhost:3000/videos/analizar', {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${API_URL}/videos/analizar`, {
         method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
         body: formData
       });
 
       const responseText = await response.text();
-      
+
       let data;
+
       try {
         data = JSON.parse(responseText);
-      } catch (e) {
-        throw new Error(`Respuesta no válida del servidor: ${responseText || response.statusText}`);
+      } catch {
+        throw new Error(
+          `Respuesta no válida del servidor: ${responseText || response.statusText}`
+        );
       }
 
       if (!response.ok) {
@@ -291,9 +382,68 @@ export default function Ejercicios({ onNavigate }) {
             </p>
           </div>
 
+
+          {/* SELECCIÓN DEL ENTRENAMIENTO QUE SE DESEA ANALIZAR */}
+          <div style={{
+            marginBottom: '1.5rem',
+            padding: '1.5rem',
+            backgroundColor: '#1C2541',
+            border: '1px solid #3A506B',
+            borderRadius: '12px'
+          }}>
+            <label style={{
+              display: 'block',
+              color: '#00B4D8',
+              fontWeight: '800',
+              marginBottom: '0.8rem'
+            }}>
+              SELECCIONA TU REGISTRO DE ENTRENAMIENTO:
+            </label>
+
+            {cargandoRegistros ? (
+              <p style={{ color: '#94A3B8' }}>
+                Cargando tu historial...
+              </p>
+            ) : registrosCompatibles.length === 0 ? (
+              <p style={{ color: '#FBBF24' }}>
+                No tienes registros de este ejercicio. Primero debes registrarlo
+                desde tu panel de entrenamiento.
+              </p>
+            ) : (
+              <select
+                value={registroSeleccionadoId}
+                onChange={(e) => {
+                  setRegistroSeleccionadoId(e.target.value);
+                  setResultado(null);
+                  setError(null);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.9rem',
+                  backgroundColor: '#0B132B',
+                  color: '#FFFFFF',
+                  border: '1px solid #06D6A0',
+                  borderRadius: '8px',
+                  fontSize: '1rem'
+                }}
+              >
+                <option value="">Selecciona un entrenamiento...</option>
+
+                {registrosCompatibles.map((registro) => (
+                  <option key={registro.id} value={registro.id}>
+                    Registro #{registro.id} — {
+                      new Date(registro.fechaSesion).toLocaleDateString()
+                    }
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
           {/* COMPONENTE DE FORMULARIO DE SUBIDA */}
           <AnalisisForm 
             ejercicio={ejercicioSeleccionado}
+            registroSeleccionado={registroSeleccionado}
             videoUsuario={videoUsuario}
             onVideoChange={handleVideoUpload}
             onSubmit={iniciarAnalisis}
