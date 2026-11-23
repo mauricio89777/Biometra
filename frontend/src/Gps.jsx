@@ -167,20 +167,56 @@ export default function Gps({ onNavigate }) {
               ← Volver al Inicio
             </button>
 
-            <div onClick={() => onNavigate && onNavigate('app')} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'default' }}>
               <BiometraLogoIcon />
               <span className="brand-name">BIOMETRA</span>
             </div>
           </div>
 
-          <nav style={{ display: 'flex', alignItems: 'center', gap: '1.8rem' }}>
-            <button onClick={() => onNavigate && onNavigate('app')} style={{ backgroundColor: '#00FF87', color: '#0F172A', padding: '0.55rem 1.2rem', borderRadius: '8px', fontWeight: '800', border: 'none', cursor: 'pointer' }}>
-              Inicio
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '1.2rem' }}>
+            <button 
+              onClick={() => onNavigate && onNavigate('ejercicios')} 
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 255, 135, 0.28)';
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 255, 135, 0.35)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(0, 255, 135, 0.14)';
+                e.currentTarget.style.boxShadow = '0 0 10px rgba(0, 255, 135, 0.15)';
+              }}
+              style={{ 
+                backgroundColor: 'rgba(0, 255, 135, 0.14)', 
+                color: '#00FF87', 
+                border: '1px solid #00FF87', 
+                padding: '0.55rem 1.2rem', 
+                borderRadius: '20px', 
+                fontSize: '0.9rem', 
+                cursor: 'pointer', 
+                fontWeight: '700',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                boxShadow: '0 0 10px rgba(0, 255, 135, 0.15)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              🏋️ Ejercicios
             </button>
-            <button onClick={() => onNavigate && onNavigate('ejercicios')} style={{ background: 'none', border: 'none', color: '#CBD5E1', fontSize: '0.95rem', cursor: 'pointer', fontWeight: '600' }}>
-              Ejercicios
-            </button>
-            <button onClick={() => onNavigate && onNavigate('perfil')} style={{ backgroundColor: '#38BDF8', color: '#0F172A', padding: '0.55rem 1.2rem', borderRadius: '20px', fontWeight: '700', border: 'none', cursor: 'pointer' }}>
+            <button 
+              onClick={() => onNavigate && onNavigate('perfil')} 
+              style={{ 
+                backgroundColor: '#38BDF8', 
+                color: '#0F172A', 
+                padding: '0.55rem 1.2rem', 
+                borderRadius: '20px', 
+                fontWeight: '700', 
+                border: 'none', 
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}
+            >
               👤 Mi Perfil
             </button>
           </nav>
@@ -370,7 +406,7 @@ export default function Gps({ onNavigate }) {
       {/* FOOTER INTERACTIVO */}
       <footer className="footer">
         <div className="footer-brand-col">
-          <div className="logo-brand" onClick={() => onNavigate && onNavigate('app')} style={{ cursor: 'pointer' }}>
+          <div className="logo-brand" style={{ cursor: 'default' }}>
             <BiometraLogoIcon />
             <span className="brand-name">BIOMETRA</span>
           </div>

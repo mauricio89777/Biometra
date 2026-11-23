@@ -121,7 +121,7 @@ export default function App() {
     <div className="app-container">
       {/* NAVBAR */}
       <nav className="navbar">
-        <div className="logo-brand" onClick={() => setCurrentView('app')}>
+        <div className="logo-brand" style={{ cursor: 'default' }}>
           <LogoBiometra />
           <span className="brand-name">BIOMETRA</span>
         </div>
@@ -188,7 +188,7 @@ export default function App() {
       {/* FOOTER */}
       <footer className="footer">
         <div className="footer-brand-col">
-          <div className="logo-brand">
+          <div className="logo-brand" style={{ cursor: 'default' }}>
             <LogoBiometra />
             <span className="brand-name">BIOMETRA</span>
           </div>
