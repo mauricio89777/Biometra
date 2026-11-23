@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { usuarioService } from '../services/api'; 
+import { usuarioService } from '../services/usuarioService'; 
+import AdminEjercicios from '../AdminEjercicios';
 
 export const AdminPanel = ({ user, onLogout, onNavigate }) => {
   const [seccionActiva, setSeccionActiva] = useState('usuarios');
@@ -21,18 +22,13 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
     genero: ''
   });
 
-  // Estados para Ejercicios (Conectados al Backend y Python)
-  const [listaEjerciciosAdmin, setListaEjerciciosAdmin] = useState([]);
-  const [sincronizando, setSincronizando] = useState(false);
 
   // Efectos de carga según la sección activa
-  useEffect(() => {
-    if (seccionActiva === 'usuarios') {
-      cargarUsuarios();
-    } else if (seccionActiva === 'ejercicios') {
-      cargarEjerciciosAdmin();
-    }
-  }, [seccionActiva]);
+useEffect(() => {
+  if (seccionActiva === 'usuarios') {
+    cargarUsuarios();
+  }
+}, [seccionActiva]);
 
   const cargarUsuarios = async () => {
     setCargando(true);
@@ -100,51 +96,11 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
     (u.email || '').toLowerCase().includes(busquedaUsuario.toLowerCase())
   );
 
-  // --- MÉTODOS DEL BANCO DE EJERCICIOS (PYTHON & PRISMA) ---
-  const cargarEjerciciosAdmin = async () => {
-    try {
-      const res = await fetch('http://localhost:3000/ejercicios/admin/listar');
-      const data = await res.json();
-      setListaEjerciciosAdmin(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Error al cargar ejercicios de admin:', error);
-    }
-  };
+ 
 
-  const handleSincronizarPython = async () => {
-    setSincronizando(true);
-    try {
-      const res = await fetch('http://localhost:3000/ejercicios/sincronizar', { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
-        alert('¡Ejercicios sincronizados correctamente desde Python!');
-        cargarEjerciciosAdmin();
-      } else {
-        alert('Error al sincronizar: ' + (data.error || 'Desconocido'));
-      }
-    } catch (error) {
-      alert('Error de red al sincronizar con Python: ' + error.message);
-    } finally {
-      setSincronizando(false);
-    }
-  };
+  
 
-  const handleToggleActivoEjercicio = async (id, estadoActual) => {
-    try {
-      const res = await fetch(`http://localhost:3000/ejercicios/admin/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activo: !estadoActual })
-      });
-      if (res.ok) {
-        cargarEjerciciosAdmin();
-      } else {
-        alert('No se pudo cambiar el estado del ejercicio.');
-      }
-    } catch (error) {
-      console.error('Error al actualizar visibilidad:', error);
-    }
-  };
+
 
   return (
     <div style={{ fontFamily: "'Inter', system-ui, sans-serif", backgroundColor: '#090D16', color: '#FFFFFF', minHeight: '100vh', paddingBottom: '60px' }}>
@@ -271,102 +227,12 @@ export const AdminPanel = ({ user, onLogout, onNavigate }) => {
             </div>
           </div>
         )}
-
-        {/* CONTENIDO: SECCIÓN EJERCICIOS (CONECTADO A PYTHON & PRISMA) */}
+       
+        {/* CONTENIDO: SECCIÓN Ejericicios */}
         {seccionActiva === 'ejercicios' && (
-          <div style={{ backgroundColor: '#111827', padding: '1.5rem', borderRadius: '14px', border: '1px solid #1F2937' }}>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <h3 style={{ margin: '0 0 0.3rem 0', color: '#00FF87', fontSize: '1.2rem', fontWeight: '800' }}>🏋️‍♂️ Banco de Ejercicios (Python & IA)</h3>
-                <p style={{ color: '#9CA3AF', fontSize: '0.85rem', margin: 0 }}>Sincroniza y controla la visibilidad de los ejercicios analizados por visión por computadora.</p>
-              </div>
-              <button 
-                onClick={handleSincronizarPython} 
-                disabled={sincronizando}
-                style={{ padding: '0.7rem 1.2rem', backgroundColor: '#00FF87', color: '#090D16', border: 'none', borderRadius: '8px', fontWeight: '900', cursor: sincronizando ? 'wait' : 'pointer' }}
-              >
-                {sincronizando ? 'Sincronizando con Python...' : '🔄 Sincronizar Ejercicios'}
-              </button>
-            </div>
-
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #1F2937', color: '#38BDF8' }}>
-                    <th style={{ padding: '0.8rem' }}>ID</th>
-                    <th style={{ padding: '0.8rem' }}>Nombre</th>
-                    <th style={{ padding: '0.8rem' }}>Script Key (Python)</th>
-                    <th style={{ padding: '0.8rem' }}>Tipo</th>
-                    <th style={{ padding: '0.8rem' }}>Estado en App</th>
-                    <th style={{ padding: '0.8rem', textAlign: 'center' }}>Acciones de Visibilidad</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {listaEjerciciosAdmin.length > 0 ? (
-                    listaEjerciciosAdmin.map(ex => (
-                      <tr key={ex.id} style={{ borderBottom: '1px solid #1F2937' }}>
-                        <td style={{ padding: '0.8rem', color: '#9CA3AF' }}>#{ex.id}</td>
-                        <td style={{ padding: '0.8rem', fontWeight: 'bold', color: '#FFF' }}>{ex.nombre}</td>
-                        <td style={{ padding: '0.8rem', color: '#38BDF8', fontFamily: 'monospace' }}>{ex.script_key}</td>
-                        <td style={{ padding: '0.8rem' }}>{ex.tipo || 'N/D'}</td>
-                        <td style={{ padding: '0.8rem' }}>
-                          <span style={{ 
-                            padding: '0.3rem 0.8rem', 
-                            borderRadius: '12px', 
-                            fontSize: '0.75rem', 
-                            fontWeight: 'bold',
-                            backgroundColor: ex.activo ? 'rgba(0, 255, 135, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                            color: ex.activo ? '#00FF87' : '#ef4444'
-                          }}>
-                            {ex.activo ? 'Visible (Activo)' : 'Oculto'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '0.8rem', textAlign: 'center' }}>
-                          <button 
-                            onClick={() => handleToggleActivoEjercicio(ex.id, ex.activo)}
-                            style={{ 
-                              background: 'transparent', 
-                              color: ex.activo ? '#ef4444' : '#00FF87', 
-                              border: `1px solid ${ex.activo ? '#ef4444' : '#00FF87'}`, 
-                              padding: '0.3rem 0.8rem', 
-                              borderRadius: '6px', 
-                              cursor: 'pointer', 
-                              fontWeight: 'bold' 
-                            }}
-                          >
-                            {ex.activo ? 'Ocultar' : 'Mostrar'}
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '2rem', color: '#9CA3AF' }}>
-                        No hay ejercicios sincronizados. Da clic en "Sincronizar Ejercicios" para cargar los scripts de Python.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-          </div>
+          <AdminEjercicios/>
         )}
-
-        {/* CONTENIDO: SECCIÓN GIMNASIO */}
-        {seccionActiva === 'gym' && (
-          <div style={{ backgroundColor: '#111827', padding: '1.5rem', borderRadius: '14px', border: '1px solid #1F2937' }}>
-            <h3 style={{ margin: '0 0 1rem 0', color: '#38BDF8', fontSize: '1.1rem', fontWeight: '800' }}>🏢 Información del Gimnasio (Biometra)</h3>
-            <p style={{ color: '#9CA3AF', fontSize: '0.9rem' }}>Aquí podrás configurar los datos generales de la sede, horarios y equipamiento visible para los usuarios de la plataforma.</p>
-            <div style={{ backgroundColor: '#090D16', padding: '1.2rem', borderRadius: '10px', border: '1px solid #1F2937', marginTop: '1rem' }}>
-              <p style={{ margin: '0.4rem 0', color: '#FFF' }}><strong>Nombre:</strong> Biometra Fitness Center</p>
-              <p style={{ margin: '0.4rem 0', color: '#FFF' }}><strong>Ubicación:</strong> Sede Principal - Av. Central 123</p>
-              <p style={{ margin: '0.4rem 0', color: '#FFF' }}><strong>Horario:</strong> Lunes a Sábado: 06:00 AM - 10:00 PM</p>
-            </div>
-          </div>
-        )}
-
+          
       </div>
     </div>
   );
