@@ -577,6 +577,27 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                 }}>
                   ✉️ {datosUsuario.email}
                 </div>
+                <div style={{
+                  backgroundColor: '#1F2937',
+                  color: '#00FF87',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold'
+                }}>
+                  Género: {datosUsuario.genero || 'No indicado'}
+                </div>
+
+                <span style={{
+                  backgroundColor: '#1F2937',
+                  color: '#00FF87',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold'
+                }}>
+                  Rol: {datosUsuario.rol || 'USUARIO'}
+                </span>
               </div>
             </div>
 
@@ -622,9 +643,6 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                 gap: '1rem',
                 marginBottom: '1rem'
               }}>
-
-
-
 
               
                 <div>
@@ -722,9 +740,7 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                   }}>
                     Género
                   </label>
-
-                  <input
-                    type="text"
+                  <select
                     value={tempDatos.genero || ''}
                     onChange={(e) => setTempDatos({
                       ...tempDatos,
@@ -738,7 +754,12 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                       backgroundColor: '#111827',
                       color: '#FFF'
                     }}
-                  />
+                  >
+                    <option value="">Prefiero no indicar</option>
+                    <option value="Hombre">Hombre</option>
+                    <option value="Mujer">Mujer</option>
+                    <option value="Otro">Otro</option>
+                  </select>
                 </div>
 
                 <div>
@@ -868,7 +889,6 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                     </div>
 
                   </div>
-
 
 
               </div>
