@@ -346,6 +346,10 @@ exports.analizar = async (req, res) => {
         const resultado = JSON.parse(salida);
 
         const datosAnalisis = resultado.analisis;
+        console.log(
+        '[METRICAS PYTHON]',
+        JSON.stringify(datosAnalisis.metricas, null, 2)
+        );        
 
         if (resultado.estado !== 'completado' || !datosAnalisis) {
           return res.status(500).json({
@@ -363,12 +367,22 @@ exports.analizar = async (req, res) => {
         const metricasPython = datosAnalisis.metricas?.por_metrica || {};
 
         const metricasDB = Object.entries(metricasPython).map(
-          ([nombre, metrica]) => ({
-            tipo_metrica: nombre.slice(0, 50),
-            valor: Number.isFinite(Number(metrica.media))
-              ? Number(metrica.media)
-              : null
-          })
+          ([nombre, metrica]) => {
+            const minimo = Number(metrica.min);
+            const maximo = Number(metrica.max);
+
+            const valor = (
+              Number.isFinite(minimo) &&
+              Number.isFinite(maximo)
+            )
+              ? (minimo + maximo) / 2
+              : null;
+
+            return {
+              tipo_metrica: nombre.slice(0, 50),
+              valor
+            };
+          }
         );
 
         // 3. Convertir el feedback.
