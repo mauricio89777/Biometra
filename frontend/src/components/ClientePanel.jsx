@@ -478,7 +478,7 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
             fontWeight: '900',
             color: '#FFFFFF'
           }}>
-            🏋️‍♂️ Mi Panel Biometra
+             Mi Panel Biometra
           </span>
 
           <button

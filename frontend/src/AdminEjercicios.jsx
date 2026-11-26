@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
@@ -24,7 +23,6 @@ export default function AdminEjercicios() {
   // Obtener el token de autenticación
   const obtenerHeaders = () => {
     const token = localStorage.getItem('token');
-
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
@@ -242,7 +240,7 @@ export default function AdminEjercicios() {
     }
   };
 
-  // Eliminar el video propio sin desactivar ni eliminar el ejercicio.
+  // Eliminar el video propio sin desactivar el ejercicio
   const eliminarVideoAyuda = async () => {
     if (!ejercicioSeleccionado?.video_ayuda || eliminandoVideo) return;
 
@@ -271,13 +269,11 @@ export default function AdminEjercicios() {
         throw new Error(data.error || 'No se pudo eliminar el video');
       }
 
-      // Actualizamos el ejercicio seleccionado en el formulario.
       setEjercicioSeleccionado(actual => ({
         ...actual,
         video_ayuda: null
       }));
 
-      // Limpiamos también cualquier archivo que estuviera seleccionado.
       setVideoSeleccionado(null);
       limpiarInputVideo();
 
@@ -295,7 +291,7 @@ export default function AdminEjercicios() {
 
   if (loading) {
     return (
-      <div style={{ color: '#FFF', padding: '2rem' }}>
+      <div style={{ color: '#FFFFFF', padding: '2rem' }}>
         Cargando panel de administración...
       </div>
     );
@@ -303,14 +299,14 @@ export default function AdminEjercicios() {
 
   return (
     <div style={{
-      backgroundColor: '#0B132B',
-      color: '#FFF',
-      padding: '2rem',
+      backgroundColor: '#090D16',
+      color: '#FFFFFF',
+      padding: '1rem 0',
       minHeight: '100vh'
     }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
 
-        {/* Encabezado */}
+        {/* ENCABEZADO */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -319,30 +315,34 @@ export default function AdminEjercicios() {
           gap: '1rem',
           marginBottom: '2rem'
         }}>
-          <h1>Panel de Administración: Ejercicios e IA</h1>
+          <h2 style={{ color: '#FFFFFF', margin: 0 }}>
+            Administración de Ejercicios e IA
+          </h2>
 
           <button
             onClick={sincronizar}
             disabled={sincronizando}
             style={{
-              backgroundColor: '#06D6A0',
-              color: '#0B132B',
+              backgroundColor: sincronizando ? '#374151' : '#00FF87',
+              color: '#090D16',
               border: 'none',
               padding: '0.8rem 1.5rem',
               borderRadius: '8px',
               fontWeight: 'bold',
-              cursor: sincronizando ? 'wait' : 'pointer'
+              cursor: sincronizando ? 'wait' : 'pointer',
+              opacity: sincronizando ? 0.7 : 1
             }}
           >
             {sincronizando ? 'Sincronizando...' : 'Sincronizar con Python'}
           </button>
         </div>
 
-        {/* Mensajes */}
+        {/* MENSAJES */}
         {error && (
           <div style={{
-            backgroundColor: 'rgba(255, 107, 107, 0.15)',
-            color: '#FF6B6B',
+            backgroundColor: 'rgba(239, 68, 68, 0.12)',
+            color: '#F87171',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
             padding: '1rem',
             borderRadius: '8px',
             marginBottom: '1rem'
@@ -353,8 +353,9 @@ export default function AdminEjercicios() {
 
         {mensaje && (
           <div style={{
-            backgroundColor: 'rgba(6, 214, 160, 0.15)',
-            color: '#06D6A0',
+            backgroundColor: 'rgba(0, 255, 135, 0.10)',
+            color: '#00FF87',
+            border: '1px solid rgba(0, 255, 135, 0.25)',
             padding: '1rem',
             borderRadius: '8px',
             marginBottom: '1rem'
@@ -363,41 +364,61 @@ export default function AdminEjercicios() {
           </div>
         )}
 
-        {/* Tabla de ejercicios */}
-        <div style={{ overflowX: 'auto' }}>
+        {/* TABLA DE EJERCICIOS */}
+        <div style={{
+          overflowX: 'auto',
+          backgroundColor: '#111827',
+          border: '1px solid #1F2937',
+          borderRadius: '14px'
+        }}>
           <table style={{
             width: '100%',
             borderCollapse: 'collapse',
-            backgroundColor: '#1C2541',
-            borderRadius: '12px',
-            overflow: 'hidden'
+            backgroundColor: '#111827'
           }}>
             <thead>
-              <tr style={{ backgroundColor: '#3A506B', textAlign: 'left' }}>
+              <tr style={{
+                backgroundColor: '#090D16',
+                textAlign: 'left',
+                color: '#38BDF8'
+              }}>
                 {['ID', 'Nombre', 'Script Key', 'Tipo', 'Video', 'Estado', 'Acciones'].map(titulo => (
-                  <th key={titulo} style={{ padding: '1rem' }}>{titulo}</th>
+                  <th key={titulo} style={{ padding: '1rem' }}>
+                    {titulo}
+                  </th>
                 ))}
               </tr>
             </thead>
 
             <tbody>
               {ejercicios.map((ej) => (
-                <tr key={ej.id} style={{ borderBottom: '1px solid #3A506B' }}>
-                  <td style={{ padding: '1rem' }}>{ej.id}</td>
+                <tr key={ej.id} style={{
+                  borderBottom: '1px solid #1F2937'
+                }}>
+                  <td style={{ padding: '1rem', color: '#9CA3AF' }}>
+                    #{ej.id}
+                  </td>
 
-                  <td style={{ padding: '1rem', fontWeight: 'bold' }}>
+                  <td style={{
+                    padding: '1rem',
+                    fontWeight: 'bold',
+                    color: '#FFFFFF'
+                  }}>
                     {ej.nombre}
                   </td>
 
-                  <td style={{ padding: '1rem', color: '#00B4D8' }}>
+                  <td style={{
+                    padding: '1rem',
+                    color: '#38BDF8'
+                  }}>
                     {ej.script_key}
                   </td>
 
-                  <td style={{ padding: '1rem' }}>
+                  <td style={{ padding: '1rem', color: '#D1D5DB' }}>
                     {ej.tipo || 'N/D'}
                   </td>
 
-                  <td style={{ padding: '1rem' }}>
+                  <td style={{ padding: '1rem', color: '#D1D5DB' }}>
                     {ej.video_ayuda ? 'Video propio' : 'Video de respaldo'}
                   </td>
 
@@ -406,10 +427,12 @@ export default function AdminEjercicios() {
                       padding: '0.3rem 0.8rem',
                       borderRadius: '12px',
                       fontSize: '0.8rem',
+                      fontWeight: 'bold',
                       backgroundColor: ej.activo
-                        ? 'rgba(6, 214, 160, 0.2)'
-                        : 'rgba(255, 107, 107, 0.2)',
-                      color: ej.activo ? '#06D6A0' : '#FF6B6B'
+                        ? 'rgba(0, 255, 135, 0.12)'
+                        : 'rgba(239, 68, 68, 0.12)',
+                      color: ej.activo ? '#00FF87' : '#F87171',
+                      border: `1px solid ${ej.activo ? 'rgba(0, 255, 135, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`
                     }}>
                       {ej.activo ? 'Visible' : 'Oculto'}
                     </span>
@@ -424,13 +447,7 @@ export default function AdminEjercicios() {
                     <button
                       onClick={() => seleccionarEjercicio(ej)}
                       style={{
-                        backgroundColor: '#00B4D8',
-                        color: '#0B132B',
-                        border: 'none',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '6px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
+                        background: 'transparent', color: '#38BDF8', border: '1px solid #38BDF8', padding: '0.3rem 0.6rem', borderRadius: '6px', marginRight: '0.5rem', cursor: 'pointer', fontWeight: 'bold'
                       }}
                     >
                       Editar
@@ -438,15 +455,15 @@ export default function AdminEjercicios() {
 
                     <button
                       onClick={() => toggleActivo(ej.id, ej.activo)}
-                      style={{
-                        backgroundColor: ej.activo ? '#FF6B6B' : '#06D6A0',
-                        color: '#0B132B',
-                        border: 'none',
-                        padding: '0.5rem 1rem',
-                        borderRadius: '6px',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}
+                    style={{
+                    backgroundColor: 'transparent',
+                    color: ej.activo ? '#EF4444' : '#00FF87',
+                    border: `1px solid ${ej.activo ? '#EF4444' : '#00FF87'}`,
+                    padding: '0.3rem 0.6rem',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
                     >
                       {ej.activo ? 'Ocultar' : 'Mostrar'}
                     </button>
@@ -456,7 +473,11 @@ export default function AdminEjercicios() {
 
               {ejercicios.length === 0 && (
                 <tr>
-                  <td colSpan="7" style={{ padding: '2rem', textAlign: 'center' }}>
+                  <td colSpan="7" style={{
+                    padding: '2rem',
+                    textAlign: 'center',
+                    color: '#9CA3AF'
+                  }}>
                     No hay ejercicios registrados. Puedes sincronizarlos desde Python.
                   </td>
                 </tr>
@@ -465,21 +486,25 @@ export default function AdminEjercicios() {
           </table>
         </div>
 
-        {/* Formulario de edición */}
+        {/* FORMULARIO DE EDICIÓN */}
         {ejercicioSeleccionado && (
           <section style={{
             marginTop: '2rem',
             padding: '1.5rem',
-            backgroundColor: '#1C2541',
-            borderRadius: '12px'
+            backgroundColor: '#111827',
+            border: '1px solid #1F2937',
+            borderRadius: '14px'
           }}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '1rem'
+              gap: '1rem',
+              flexWrap: 'wrap'
             }}>
-              <h2>Editar ejercicio: {ejercicioSeleccionado.nombre}</h2>
+              <h2 style={{ color: '#38BDF8', margin: 0 }}>
+                Editar ejercicio: {ejercicioSeleccionado.nombre}
+              </h2>
 
               <button
                 onClick={() => {
@@ -490,9 +515,9 @@ export default function AdminEjercicios() {
                   setError('');
                 }}
                 style={{
-                  backgroundColor: '#3A506B',
-                  color: '#FFF',
-                  border: 'none',
+                  backgroundColor: '#1F2937',
+                  color: '#FFFFFF',
+                  border: '1px solid #374151',
                   padding: '0.5rem 1rem',
                   borderRadius: '6px',
                   cursor: 'pointer'
@@ -503,9 +528,13 @@ export default function AdminEjercicios() {
             </div>
 
             <form onSubmit={guardarCambios}>
-              <div style={{ display: 'grid', gap: '1rem', marginTop: '1rem' }}>
+              <div style={{
+                display: 'grid',
+                gap: '1rem',
+                marginTop: '1.5rem'
+              }}>
 
-                <label>
+                <label style={estiloLabel}>
                   Nombre
                   <input
                     type="text"
@@ -519,7 +548,7 @@ export default function AdminEjercicios() {
                   />
                 </label>
 
-                <label>
+                <label style={estiloLabel}>
                   Grupo muscular
                   <input
                     type="text"
@@ -532,7 +561,7 @@ export default function AdminEjercicios() {
                   />
                 </label>
 
-                <label>
+                <label style={estiloLabel}>
                   Descripción
                   <textarea
                     value={ejercicioSeleccionado.descripcion}
@@ -541,35 +570,44 @@ export default function AdminEjercicios() {
                       descripcion: e.target.value
                     })}
                     rows="4"
-                    style={{ ...estiloInput, resize: 'vertical' }}
+                    style={{
+                      ...estiloInput,
+                      resize: 'vertical'
+                    }}
                   />
                 </label>
 
                 <button
                   type="submit"
                   disabled={guardando}
-                  style={estiloBoton}
+                  style={{
+                    ...estiloBoton,
+                    opacity: guardando ? 0.6 : 1,
+                    cursor: guardando ? 'not-allowed' : 'pointer'
+                  }}
                 >
                   {guardando ? 'Guardando...' : 'Guardar cambios'}
                 </button>
               </div>
             </form>
 
-            {/* Asociación del video demostrativo */}
+            {/* ASOCIACIÓN DEL VIDEO DEMOSTRATIVO */}
             <div style={{
               marginTop: '2rem',
               paddingTop: '1.5rem',
-              borderTop: '1px solid #3A506B'
+              borderTop: '1px solid #1F2937'
             }}>
-              <h3>Video demostrativo</h3>
+              <h3 style={{ color: '#38BDF8' }}>
+                Video demostrativo
+              </h3>
 
-              <p style={{ color: '#B8C5D6' }}>
+              <p style={{ color: '#9CA3AF' }}>
                 {ejercicioSeleccionado.video_ayuda
                   ? 'Este ejercicio tiene un video propio asociado.'
                   : 'Este ejercicio todavía utiliza el video de respaldo de YouTube.'}
               </p>
 
-              <label style={{ display: 'block', margin: '1rem 0' }}>
+              <label style={estiloLabel}>
                 Seleccionar video
 
                 <input
@@ -603,7 +641,12 @@ export default function AdminEjercicios() {
 
                     setVideoSeleccionado(archivo);
                   }}
-                  style={{ display: 'block', marginTop: '0.5rem' }}
+                  style={{
+                    display: 'block',
+                    marginTop: '0.7rem',
+                    color: '#D1D5DB',
+                    width: '100%'
+                  }}
                 />
               </label>
 
@@ -619,10 +662,12 @@ export default function AdminEjercicios() {
                     maxHeight: '300px',
                     borderRadius: '8px',
                     marginBottom: '1rem',
-                    backgroundColor: '#000'
+                    backgroundColor: '#000',
+                    border: '1px solid #374151'
                   }}
                 />
               )}
+
               <button
                 type="button"
                 onClick={subirVideoAyuda}
@@ -635,17 +680,18 @@ export default function AdminEjercicios() {
               >
                 {subiendoVideo ? 'Subiendo video...' : 'Subir y asociar video'}
               </button>
+
               {ejercicioSeleccionado.video_ayuda && (
                 <button
                   type="button"
                   onClick={eliminarVideoAyuda}
                   disabled={eliminandoVideo || subiendoVideo}
                   style={{
-                    backgroundColor: '#FF6B6B',
-                    color: '#0B132B',
+                    backgroundColor: '#EF4444',
+                    color: '#FFFFFF',
                     border: 'none',
                     padding: '0.8rem 1.2rem',
-                    borderRadius: '6px',
+                    borderRadius: '8px',
                     fontWeight: 'bold',
                     cursor: eliminandoVideo || subiendoVideo ? 'not-allowed' : 'pointer',
                     opacity: eliminandoVideo || subiendoVideo ? 0.6 : 1,
@@ -664,25 +710,34 @@ export default function AdminEjercicios() {
   );
 }
 
-// Estilos reutilizables
+// ESTILOS REUTILIZABLES
+
+const estiloLabel = {
+  display: 'block',
+  color: '#9CA3AF',
+  fontSize: '0.9rem',
+  fontWeight: '600'
+};
+
 const estiloInput = {
   display: 'block',
   width: '100%',
   boxSizing: 'border-box',
   marginTop: '0.5rem',
   padding: '0.8rem',
-  borderRadius: '6px',
-  border: '1px solid #3A506B',
-  backgroundColor: '#0B132B',
-  color: '#FFF'
+  borderRadius: '8px',
+  border: '1px solid #374151',
+  backgroundColor: '#090D16',
+  color: '#FFFFFF',
+  outline: 'none'
 };
 
 const estiloBoton = {
-  backgroundColor: '#06D6A0',
-  color: '#0B132B',
+  backgroundColor: '#00FF87',
+  color: '#090D16',
   border: 'none',
   padding: '0.8rem 1.2rem',
-  borderRadius: '6px',
-  fontWeight: 'bold',
+  borderRadius: '8px',
+  fontWeight: '800',
   cursor: 'pointer'
 };
