@@ -132,11 +132,7 @@ useEffect(() => {
             style={{ flex: 1, padding: '0.8rem', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: seccionActiva === 'ejercicios' ? '#38BDF8' : '#111827', color: seccionActiva === 'ejercicios' ? '#090D16' : '#9CA3AF' }}>
             🏋️‍♂️ Banco de Ejercicios (Python)
           </button>
-          <button 
-            onClick={() => setSeccionActiva('gym')} 
-            style={{ flex: 1, padding: '0.8rem', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: seccionActiva === 'gym' ? '#38BDF8' : '#111827', color: seccionActiva === 'gym' ? '#090D16' : '#9CA3AF' }}>
-            🏢 Configuración Gimnasio
-          </button>
+      
         </div>
 
         {/* CONTENIDO: SECCIÓN USUARIOS */}

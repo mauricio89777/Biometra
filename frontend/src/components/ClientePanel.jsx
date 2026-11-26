@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usuarioService } from '../services/usuarioService';
 import { ejercicioService } from '../services/ejercicioService';
 import { sesionService } from '../services/sesionService';
@@ -51,6 +51,24 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
   const [fotoPortadaPreview, setFotoPortadaPreview] = useState(null);
 
   const [guardandoPerfil, setGuardandoPerfil] = useState(false);
+
+  // Notificación (toast) dentro de la página
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+
+  const mostrarToast = (mensaje, tipo = 'success') => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+
+    setToast({ mensaje, tipo });
+
+    toastTimer.current = setTimeout(() => setToast(null), 3500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
 
 
   // Catálogo de ejercicios
@@ -224,14 +242,15 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
 
       setEditando(false);
 
-      alert('Perfil actualizado correctamente');
+      mostrarToast('Perfil actualizado correctamente');
 
     } catch (error) {
       console.error('Error al actualizar perfil:', error);
 
-      alert(
+      mostrarToast(
         'Error al actualizar: ' +
-        (error.response?.data?.error || error.message)
+        (error.response?.data?.error || error.message),
+        'error'
       );
 
     } finally {
@@ -252,7 +271,7 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
     e.preventDefault();
 
     if (!ejercicioSeleccionadoId) {
-      alert('Selecciona un ejercicio del catálogo');
+      mostrarToast('Selecciona un ejercicio del catálogo', 'error');
       return;
     }
 
@@ -267,26 +286,26 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
       numeroSeries < 1 ||
       numeroSeries > 20
     ) {
-      alert('La cantidad de series debe estar entre 1 y 20');
+      mostrarToast('La cantidad de series debe estar entre 1 y 20', 'error');
       return;
     }
 
     // Validar según el tipo de ejercicio
     if (esIsometrico) {
       if (!Number.isInteger(duracion) || duracion < 1) {
-        alert('La duración debe ser un número entero mayor a cero');
+        mostrarToast('La duración debe ser un número entero mayor a cero', 'error');
         return;
       }
     } else {
       if (!Number.isInteger(repeticiones) || repeticiones < 1) {
-        alert('Las repeticiones deben ser un número mayor a cero');
+        mostrarToast('Las repeticiones deben ser un número mayor a cero', 'error');
         return;
       }
     }
 
     // Validar peso
     if (!Number.isFinite(peso) || peso < 0) {
-      alert('El peso debe ser igual o mayor a cero');
+      mostrarToast('El peso debe ser igual o mayor a cero', 'error');
       return;
     }
 
@@ -328,14 +347,15 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
       setDuracionPorSerie(30);
       setPesoPorSerie(0);
 
-      alert('Entrenamiento registrado correctamente');
+      mostrarToast('Entrenamiento registrado correctamente');
 
     } catch (error) {
       console.error('Error al registrar entrenamiento:', error);
 
-      alert(
+      mostrarToast(
         'Error al registrar entrenamiento: ' +
-        (error.response?.data?.error || error.message)
+        (error.response?.data?.error || error.message),
+        'error'
       );
 
     } finally {
@@ -388,6 +408,41 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
       minHeight: '100vh',
       paddingBottom: '60px'
     }}>
+
+      {/* NOTIFICACIÓN */}
+      {toast && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            top: '24px',
+            right: '24px',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem',
+            maxWidth: '360px',
+            padding: '0.9rem 1.3rem',
+            borderRadius: '10px',
+            fontWeight: '700',
+            fontSize: '0.95rem',
+            backgroundColor: toast.tipo === 'success' ? '#00FF87' : '#EF4444',
+            color: toast.tipo === 'success' ? '#090D16' : '#FFFFFF',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+            animation: 'toastEntrada 0.3s ease'
+          }}
+        >
+          <span>{toast.tipo === 'success' ? '✅' : '⚠️'}</span>
+          <span>{toast.mensaje}</span>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes toastEntrada {
+          from { opacity: 0; transform: translateY(-12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
 
       {/* HEADER */}
       <header style={{
@@ -522,6 +577,16 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                 }}>
                   ✉️ {datosUsuario.email}
                 </div>
+                <div style={{
+                  backgroundColor: '#1F2937',
+                  color: '#00FF87',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold'
+                }}>
+                  Género: {datosUsuario.genero || 'No indicado'}
+                </div>
 
                 <span style={{
                   backgroundColor: '#1F2937',
@@ -578,9 +643,6 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                 gap: '1rem',
                 marginBottom: '1rem'
               }}>
-
-
-
 
               
                 <div>
@@ -678,9 +740,7 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                   }}>
                     Género
                   </label>
-
-                  <input
-                    type="text"
+                  <select
                     value={tempDatos.genero || ''}
                     onChange={(e) => setTempDatos({
                       ...tempDatos,
@@ -694,7 +754,12 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                       backgroundColor: '#111827',
                       color: '#FFF'
                     }}
-                  />
+                  >
+                    <option value="">Prefiero no indicar</option>
+                    <option value="Hombre">Hombre</option>
+                    <option value="Mujer">Mujer</option>
+                    <option value="Otro">Otro</option>
+                  </select>
                 </div>
 
                 <div>
@@ -751,7 +816,7 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                           const archivo = e.target.files?.[0] || null;
 
                           if (archivo && archivo.size > 5 * 1024 * 1024) {
-                            alert('La imagen no puede superar los 5 MB');
+                            mostrarToast('La imagen no puede superar los 5 MB', 'error');
                             e.target.value = '';
                             return;
                           }
@@ -796,7 +861,7 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                           const archivo = e.target.files?.[0] || null;
 
                           if (archivo && archivo.size > 5 * 1024 * 1024) {
-                            alert('La imagen no puede superar los 5 MB');
+                            mostrarToast('La imagen no puede superar los 5 MB', 'error');
                             e.target.value = '';
                             return;
                           }
@@ -824,7 +889,6 @@ export const ClientePanel = ({ user, onLogout, onNavigate }) => {
                     </div>
 
                   </div>
-
 
 
               </div>

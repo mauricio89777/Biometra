@@ -64,9 +64,11 @@ export default function Login({ onLoginSuccess }) {
   const [mode, setMode] = useState('login'); 
   const [role, setRole] = useState('USUARIO'); // Coincide con tu enum Prisma (USUARIO o ADMIN)
   const [name, setName] = useState('');
+  const [fechaNacimiento, setFechaNacimiento] = useState('');
+  const [genero, setGenero] = useState('');
+  const [altura, setAltura] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
 
@@ -81,6 +83,9 @@ export default function Login({ onLoginSuccess }) {
     setPassword('');
     setName('');
     setAcceptedTerms(false);
+    setFechaNacimiento('');
+    setGenero('');
+    setAltura('');
   };
 
   const handleSubmit = async (e) => {
@@ -88,6 +93,7 @@ export default function Login({ onLoginSuccess }) {
     setErrorMessage('');
     setSuccessMessage('');
 
+    
     try {
       if (mode === 'register') {
         if (!acceptedTerms) {
@@ -95,12 +101,22 @@ export default function Login({ onLoginSuccess }) {
           return;
         }
 
-        // Petición real al backend para registrar en la BD
+        if (!fechaNacimiento) {
+          setErrorMessage('Debes ingresar tu fecha de nacimiento.');
+          return;
+        }
+
+        // Petición al backend para registrar en la BD
         await authService.register({
           nombre: name.trim(),
           email: email.trim().toLowerCase(),
           password,
-          rol: role.toUpperCase()
+          rol: role.toUpperCase(),
+
+          // Datos personales
+          fecha_nacimiento: fechaNacimiento,
+          genero: genero || null,
+          altura: altura === '' ? null : Number(altura)
         });
 
         setSuccessMessage('¡Cuenta creada exitosamente en la base de datos! Procede a iniciar sesión.');
@@ -109,10 +125,13 @@ export default function Login({ onLoginSuccess }) {
           setMode('login');
           setPassword('');
           setAcceptedTerms(false);
+          setFechaNacimiento('');
+          setGenero('');
+          setAltura('');
         }, 1500);
 
       } else {
-        // Petición real de Login al backend
+        // Petición de Login al backend
         const response = await authService.login({
           email: email.trim().toLowerCase(),
           password
@@ -126,14 +145,16 @@ export default function Login({ onLoginSuccess }) {
           onLoginSuccess({
             id: response.usuario.id,
             email: response.usuario.email,
-            role: response.usuario.rol, // 'usuario' o 'admin' estaba en lowe.caser
+            role: response.usuario.rol,
             name: response.usuario.nombre
           });
         }
       }
     } catch (error) {
-      // Capturamos el error que manda el backend de forma limpia
-      setErrorMessage(error.response?.data?.error || 'Ocurrió un error en el servidor.');
+      // Capturamos el error que manda el backend
+      setErrorMessage(
+        error.response?.data?.error || 'Ocurrió un error en el servidor.'
+      );
     }
   };
 
@@ -194,6 +215,83 @@ export default function Login({ onLoginSuccess }) {
                   </button>
                 </div>
               </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
+                Fecha de Nacimiento *
+              </label>
+              <input
+                type="date"
+                required
+                value={fechaNacimiento}
+                onChange={(e) => setFechaNacimiento(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  borderRadius: '8px',
+                  border: '1px solid #334155',
+                  backgroundColor: '#1E293B',
+                  color: '#fff',
+                  boxSizing: 'border-box',
+                  colorScheme: 'dark'
+                }}
+              />
+              <small style={{ color: '#94A3B8', fontSize: '0.75rem' }}>
+                Debes tener al menos 18 años para registrarte.
+              </small>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
+                Género (opcional)
+              </label>
+              <select
+                value={genero}
+                onChange={(e) => setGenero(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  borderRadius: '8px',
+                  border: '1px solid #334155',
+                  backgroundColor: '#1E293B',
+                  color: '#fff',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="">Prefiero no indicar</option>
+                <option value="Hombre">Hombre</option>
+                <option value="Mujer">Mujer</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
+                Estatura en metros (opcional)
+              </label>
+              <input
+                type="number"
+                min="0.50"
+                max="2.50"
+                step="0.01"
+                placeholder="Ej. 1.74"
+                value={altura}
+                onChange={(e) => setAltura(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.8rem',
+                  borderRadius: '8px',
+                  border: '1px solid #334155',
+                  backgroundColor: '#1E293B',
+                  color: '#fff',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <small style={{ color: '#94A3B8', fontSize: '0.75rem' }}>
+                Ingresa tu estatura en metros, por ejemplo: 1.74.
+              </small>
+            </div>
+
             </>
           )}
 
@@ -231,7 +329,7 @@ export default function Login({ onLoginSuccess }) {
         )}
       </div>
 
-      {/* MODAL DE TÉRMINOS Y CONDICIONES (Mantiene el mismo texto legal que tenías) */}
+  
       {/* MODAL DE TÉRMINOS Y CONDICIONES */}
       {showTermsModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(11, 17, 32, 0.92)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1.5rem', boxSizing: 'border-box', backdropFilter: 'blur(6px)' }}>

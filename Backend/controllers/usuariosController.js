@@ -26,6 +26,39 @@ const esPropietarioOAdmin = (req, id) => {
   return esAdmin(req) || Number(req.usuario?.id) === Number(id);
 };
 
+
+const validarAltura = (altura) => {
+  // Si no se envía el campo, no se modifica
+  if (altura === undefined) {
+    return { valor: undefined };
+  }
+
+  // Permitir dejar el campo vacío
+  if (altura === null || String(altura).trim() === '') {
+    return { valor: null };
+  }
+
+  const texto = String(altura).trim();
+
+  // Permitir hasta dos decimales
+  if (!/^\d+(\.\d{1,2})?$/.test(texto)) {
+    return {
+      error: 'La estatura debe tener como máximo dos decimales'
+    };
+  }
+
+  const valor = Number(texto);
+
+  // Rango permitido: 0.50 a 2.50 metros
+  if (!Number.isFinite(valor) || valor < 0.5 || valor > 2.5) {
+    return {
+      error: 'La estatura debe estar entre 0.50 y 2.50 metros'
+    };
+  }
+
+  return { valor };
+};
+
 // Directorio de almacenamiento de imágenes de perfil
 const carpetaPerfiles = path.join(__dirname, '../uploads/perfiles');
 
@@ -70,6 +103,13 @@ exports.crear = async (req, res) => {
     if (!passwordPlano) {
       return res.status(400).json({ error: 'La contraseña es requerida' });
     }
+    const resultadoAltura = validarAltura(altura);
+
+    if (resultadoAltura.error) {
+      return res.status(400).json({
+        error: resultadoAltura.error
+      });
+    }  
 
     const hash = await bcrypt.hash(passwordPlano, 10);
     
@@ -80,7 +120,7 @@ exports.crear = async (req, res) => {
       rol: resto.rol?.toUpperCase() || 'USUARIO',
       password_hash: hash,
       peso: peso ? parseFloat(peso) : null,
-      altura: altura ? parseFloat(altura) : null
+      altura: resultadoAltura.valor ?? null
       }
     });
 
@@ -148,8 +188,16 @@ exports.actualizar = async (req, res) => {
       datos.peso = peso ? parseFloat(peso) : null;
     }
    
-    if (altura !== undefined) { 
-      datos.altura = altura ? parseFloat(altura) : null;
+    if (altura !== undefined) {
+      const resultadoAltura = validarAltura(altura);
+  
+      if (resultadoAltura.error) {
+        return res.status(400).json({
+          error: resultadoAltura.error
+        });
+      }
+
+      datos.altura = resultadoAltura.valor;
     }
     if (genero !== undefined) datos.genero = genero;
 
