@@ -39,7 +39,7 @@ Análisis de movimiento
 
 
 Base de Datos 
-- MySql
+- MySql/Mariadb
 
 ## Roles 
 
@@ -82,7 +82,7 @@ https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker
 3. inicia el backend
 ### Backend
 ```bash
-cd Backend(Base de datos si es una version antigua)
+cd Backend
 npm ci
 node server.js
 crear arhivo .env
