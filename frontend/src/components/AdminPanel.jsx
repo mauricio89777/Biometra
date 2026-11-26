@@ -125,12 +125,12 @@ useEffect(() => {
           <button 
             onClick={() => setSeccionActiva('usuarios')} 
             style={{ flex: 1, padding: '0.8rem', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: seccionActiva === 'usuarios' ? '#38BDF8' : '#111827', color: seccionActiva === 'usuarios' ? '#090D16' : '#9CA3AF' }}>
-            👤 Gestión de Usuarios
+            Gestión de Usuarios
           </button>
           <button 
             onClick={() => setSeccionActiva('ejercicios')} 
             style={{ flex: 1, padding: '0.8rem', borderRadius: '10px', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: seccionActiva === 'ejercicios' ? '#38BDF8' : '#111827', color: seccionActiva === 'ejercicios' ? '#090D16' : '#9CA3AF' }}>
-            🏋️‍♂️ Banco de Ejercicios (Python)
+            Banco de Ejercicios (Python)
           </button>
       
         </div>
@@ -140,7 +140,7 @@ useEffect(() => {
           <div>
             <div style={{ backgroundColor: '#111827', padding: '1.5rem', borderRadius: '14px', border: '1px solid #1F2937', marginBottom: '25px' }}>
               <h3 style={{ margin: '0 0 1rem 0', color: usuarioEditando ? '#38BDF8' : '#00FF87', fontSize: '1.1rem', fontWeight: '800' }}>
-                {usuarioEditando ? `✏️ Editando Usuario ID: ${usuarioEditando.id}` : '➕ Registrar Nuevo Usuario'}
+                {usuarioEditando ? ` Editando Usuario ID: ${usuarioEditando.id}` : '➕ Registrar Nuevo Usuario'}
               </h3>
               <form onSubmit={handleGuardarUsuario} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'end' }}>
                 <div>
@@ -191,7 +191,7 @@ useEffect(() => {
             <div style={{ backgroundColor: '#111827', padding: '1.5rem', borderRadius: '14px', border: '1px solid #1F2937' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <h3 style={{ margin: 0, color: '#FFF', fontSize: '1.1rem', fontWeight: '800' }}>
-                  📋 Lista de Usuarios en Base de Datos ({usuariosFiltrados.length})
+                   Lista de Usuarios en Base de Datos ({usuariosFiltrados.length})
                 </h3>
                 <input type="text" placeholder="🔍 Buscar usuario..." value={busquedaUsuario} onChange={(e) => setBusquedaUsuario(e.target.value)} style={{ width: '100%', maxWidth: '280px', padding: '0.6rem', borderRadius: '8px', border: '1px solid #374151', backgroundColor: '#090D16', color: '#FFF' }} />
               </div>
