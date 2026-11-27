@@ -44,7 +44,9 @@ exports.registrar = async (req, res) => {
       password,
       fecha_nacimiento,
       genero,
-      altura
+      altura,
+      rol,
+      clave_admin
     } = req.body;
 
     // Validar campos obligatorios
@@ -54,8 +56,42 @@ exports.registrar = async (req, res) => {
       });
     }
 
+    if (password.length < 8) {
+      return res.status(400).json({
+        error: 'La contraseña debe tener al menos 8 caracteres'
+      });
+    }
+
+    // Determinar el rol solicitado
+    const esAdmin = rol === 'ADMIN';
+
+    // Verificar autorización para crear administradores
+    if (esAdmin) {
+      if (!process.env.ADMIN_SECRET) {
+        console.error('ADMIN_SECRET no está configurada');
+        return res.status(500).json({
+          error: 'La creación de administradores no está configurada'
+        });
+      }
+
+      if (
+        typeof clave_admin !== 'string' ||
+        !clave_admin ||
+        clave_admin !== process.env.ADMIN_SECRET
+      ) {
+        return res.status(403).json({
+          error: 'Clave de autorización de administrador incorrecta'
+        });
+      }
+    }
+
     // Validar género
-    const generosPermitidos = ['Hombre', 'Mujer', 'Otro', 'Prefiero no indicar'];
+    const generosPermitidos = [
+      'Hombre',
+      'Mujer',
+      'Otro',
+      'Prefiero no indicar'
+    ];
 
     if (genero && !generosPermitidos.includes(genero)) {
       return res.status(400).json({
@@ -88,14 +124,12 @@ exports.registrar = async (req, res) => {
       fechaNacimiento = fecha;
     }
 
-    // Validar estatura si fue proporcionada
-    
+    // Validar estatura
     let alturaUsuario = null;
 
     if (altura !== undefined && altura !== null && altura !== '') {
       const alturaTexto = String(altura).trim();
 
-      // Permite números enteros o con hasta dos decimales
       if (!/^\d+(\.\d{1,2})?$/.test(alturaTexto)) {
         return res.status(400).json({
           error: 'La estatura debe tener como máximo dos decimales'
@@ -104,7 +138,6 @@ exports.registrar = async (req, res) => {
 
       alturaUsuario = Number(alturaTexto);
 
-      // Rango permitido: 0.50 m a 2.50 m
       if (
         !Number.isFinite(alturaUsuario) ||
         alturaUsuario < 0.5 ||
@@ -116,10 +149,9 @@ exports.registrar = async (req, res) => {
       }
     }
 
-
     const correo = email.trim().toLowerCase();
 
-    // Verificar si el usuario ya existe
+    // Verificar si el correo ya existe
     const existe = await prisma.usuario.findUnique({
       where: { email: correo }
     });
@@ -130,17 +162,16 @@ exports.registrar = async (req, res) => {
       });
     }
 
+    // Encriptar contraseña
     const hash = await bcrypt.hash(password, 10);
 
+    // Crear usuario con el rol autorizado
     const nuevoUsuario = await prisma.usuario.create({
       data: {
         nombre: nombre.trim(),
         email: correo,
         password_hash: hash,
-
-        // El registro público siempre crea usuarios normales
-        rol: 'USUARIO',
-
+        rol: esAdmin ? 'ADMIN' : 'USUARIO',
         fecha_nacimiento: fechaNacimiento,
         genero: genero || null,
         altura: alturaUsuario
@@ -155,3 +186,4 @@ exports.registrar = async (req, res) => {
     manejarError(res, error);
   }
 };
+;
