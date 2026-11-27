@@ -52,7 +52,13 @@ Base de Datos
 El proyecto se desarrolla utilizando la metodología ágil Scrum, organizando el trabajo mediante sprints, planificación de tareas, seguimiento de avances y retrospectivas.
 
 
-## Requerimientos previa
+# Biometra
+
+Guía de instalación, configuración y despliegue del proyecto **Biometra** utilizando Docker.
+
+---
+
+## 📋 Requisitos Previos
 
 - Node.js y npm.
 - Python 3.14.7 (version del proyecto)
@@ -64,78 +70,14 @@ También se necesita descargar el modelo pose_landmarker_full.task de MediaPipe.
 https://developers.google.com/edge/mediapipe/solutions/vision/pose_landmarker
 
 
-## Instalacion
-
-1. Clonar el repositorio
-
-```bash
-  git clone https://github.com/mauricio89777/Biometra.git
-```
-
-2. Ve al repositorio
-
-```bash
-  cd Biometra
-```
-
-
-3. inicia el backend
-### Backend
-```bash
-cd Backend
-npm ci
-node server.js
-crear arhivo .env
-crear la carpeta uploads/originales (para almacenar videos)
-```
-
-4. Generar Prisma client y aplicar las migraciones existentes
-```bash
-  npx prisma generate
-  npx prisma migrate deploy
-```
-
-5. Inicia el frontend
-### Frontend
-```bash
-cd frontend
-npm ci
-npm run dev
-```
-
-
-6. Configurar el entorno de Python
-
-Linux (Manjaro):
-```bash
-cd analisis
-python -m venv venv
-source venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-
-Windows (PowerShell):
-```bash
-cd analisis
-py -m venv venv
-.\venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-7. Descargar el modelo de MediaPipe
+* **Descargar el modelo de MediaPipe**
 
 Descargar el modelo pose_landmarker_full.task y  heavy colocarlo en:
 
 analisis/models/pose_landmarker_full.task
 analisis/models/pose_landmarker_heavy.task
 
-
-8. Instalar FFmpeg
-
-FFmpeg se utiliza para procesar los videos y generar archivos de salida compatibles con navegadores web.
+* **Instalar FFmpeg** FFmpeg se utiliza para procesar los videos y generar archivos de salida compatibles con navegadores web.
 
 Manjaro Linux:
 
@@ -148,14 +90,6 @@ Descargar FFmpeg desde su sitio oficial:
 https://ffmpeg.org/download.html
 
 Configurar la carpeta bin de FFmpeg en la variable de entorno PATH de Windows.
-
-# Biometra
-
-Guía de instalación, configuración y despliegue del proyecto **Biometra** utilizando Docker.
-
----
-
-## 📋 Requisitos Previos
 
 * **Virtualización** habilitada en la BIOS/UEFI (cuando sea necesaria).
 * **Permisos de administrador** para instalar los componentes requeridos.
@@ -321,47 +255,46 @@ Al ejecutar `docker compose down`, los contenedores se detienen y eliminan, **pe
 * [Docker Desktop para Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
 * [Docker Compose](https://docs.docker.com/compose/)
 
+## Estructura del Proyecto
+
+```text
+Biometra/
+├── analisis/                   
+│   ├── biometra/               
+│   ├── models/                 
+│   ├── output/                
+│   ├── tests/                  
+│   ├── tools/                 
+│   ├── video/                  
+│   ├── main.py                 
+│   └── requirements.txt        
+├── Backend/                    
+│   ├── controllers/            
+│   ├── middlewares/           
+│   ├── prisma/                 
+│   ├── routes/                
+│   ├── test/                   
+│   ├── uploads/               
+│   ├── utils/                  
+│   ├── base datos (mysql).sql  
+│   ├── Dockerfile              
+│   ├── package.json            
+│   └── server.js               
+├── documentacion/              
+│   ├── Fase 1/
+│   ├── Fase 2/
+│   └── Fase 3/
+├── frontend/                   
+│   ├── public/                 
+│   ├── src/                   
+│   ├── dockerfile              
+│   ├── index.html              
+│   ├── package.json            
+│   └── vite.config.js         
+├── docker-compose.yml           
+└── README.md                   
 
 
 
 
 Estructura del proyecto
-
-
-```
-Biometra/
-├── analisis/
-│   ├── biometra/
-│   │   ├── exercises/
-│   │   ├── geometry.py
-│   │   ├── informe.py
-│   │   ├── pose.py
-│   │   └── video_io.py
-│   ├── models/
-│   ├── output/
-│   ├── tests/
-│   ├── tools/
-│   ├── video/
-│   ├── main.py
-│   └── requirements.txt
-│
-├── Backend/
-│   ├── controllers/
-│   ├── middlewares/
-│   ├── prisma/
-│   ├── routes/
-│   ├── uploads/
-│   ├── utils/
-│   ├── server.js
-│   └── package.json
-│
-├── frontend/
-│   ├── src/
-│   ├── public/
-│   └── package.json
-│
-├── documentacion/
-└── README.md
-```
-
-
