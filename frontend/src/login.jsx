@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { authService } from '../src/services/authService';
 
-// NUEVO ICONO BIOMETRA: Símbolo de pivote cinemático, vectores y visión por computadora
 const LogoBiometraIcon = () => (
   <svg 
     width="42" 
@@ -17,11 +16,7 @@ const LogoBiometraIcon = () => (
         <stop offset="100%" stopColor="#38BDF8" />
       </linearGradient>
     </defs>
-
-    {/* Fondo en Dark Navy */}
     <rect width="100" height="100" rx="22" fill="#020617" />
-
-    {/* Hexágono de visión por computadora y precisión */}
     <path 
       d="M50 15 L80 32.5 L80 67.5 L50 85 L20 67.5 L20 32.5 Z" 
       stroke="#334155" 
@@ -29,12 +24,8 @@ const LogoBiometraIcon = () => (
       strokeLinejoin="round" 
       opacity="0.6"
     />
-
-    {/* Nodo articular central */}
     <circle cx="50" cy="50" r="8" fill="#FFFFFF" />
     <circle cx="50" cy="50" r="14" stroke="#38BDF8" strokeWidth="4" opacity="0.8"/>
-
-    {/* Vector superior de fuerza */}
     <path 
       d="M50 36 V22 M50 22 L44 28 M50 22 L56 28" 
       stroke="#38BDF8" 
@@ -42,8 +33,6 @@ const LogoBiometraIcon = () => (
       strokeLinecap="round" 
       strokeLinejoin="round"
     />
-
-    {/* Arco cinemático continuo y trayectoria de rastreo de puntos */}
     <path 
       d="M72 40 A25 25 0 0 1 50 75" 
       stroke="url(#kineticGradientLogin)" 
@@ -61,8 +50,9 @@ const LogoBiometraIcon = () => (
 );
 
 export default function Login({ onLoginSuccess }) {
+  const [adminSecret, setAdminSecret] = useState('');
   const [mode, setMode] = useState('login'); 
-  const [role, setRole] = useState('USUARIO'); // Coincide con tu enum Prisma (USUARIO o ADMIN)
+  const [role, setRole] = useState('USUARIO');
   const [name, setName] = useState('');
   const [fechaNacimiento, setFechaNacimiento] = useState('');
   const [genero, setGenero] = useState('');
@@ -78,6 +68,7 @@ export default function Login({ onLoginSuccess }) {
   const handleTabChange = (newMode) => {
     setMode(newMode);
     setErrorMessage('');
+    setAdminSecret('');
     setSuccessMessage('');
     setEmail('');
     setPassword('');
@@ -93,7 +84,6 @@ export default function Login({ onLoginSuccess }) {
     setErrorMessage('');
     setSuccessMessage('');
 
-    
     try {
       if (mode === 'register') {
         if (!acceptedTerms) {
@@ -106,14 +96,12 @@ export default function Login({ onLoginSuccess }) {
           return;
         }
 
-        // Petición al backend para registrar en la BD
         await authService.register({
           nombre: name.trim(),
           email: email.trim().toLowerCase(),
           password,
-          rol: role.toUpperCase(),
-
-          // Datos personales
+          rol: role,
+          clave_admin: role === 'ADMIN' ? adminSecret : undefined,
           fecha_nacimiento: fechaNacimiento,
           genero: genero || null,
           altura: altura === '' ? null : Number(altura)
@@ -124,6 +112,7 @@ export default function Login({ onLoginSuccess }) {
         setTimeout(() => {
           setMode('login');
           setPassword('');
+          setAdminSecret('');
           setAcceptedTerms(false);
           setFechaNacimiento('');
           setGenero('');
@@ -131,13 +120,11 @@ export default function Login({ onLoginSuccess }) {
         }, 1500);
 
       } else {
-        // Petición de Login al backend
         const response = await authService.login({
           email: email.trim().toLowerCase(),
           password
         });
 
-        // Guardamos el token y los datos del usuario en localStorage
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response.usuario));
 
@@ -151,7 +138,6 @@ export default function Login({ onLoginSuccess }) {
         }
       }
     } catch (error) {
-      // Capturamos el error que manda el backend
       setErrorMessage(
         error.response?.data?.error || 'Ocurrió un error en el servidor.'
       );
@@ -162,7 +148,7 @@ export default function Login({ onLoginSuccess }) {
     <div style={{ width: '100vw', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#0B1120', fontFamily: "'Inter', system-ui, sans-serif", padding: '1rem', boxSizing: 'border-box' }}>
       <div style={{ backgroundColor: '#0F172A', width: '100%', maxWidth: '440px', padding: '2.5rem 2rem', borderRadius: '20px', border: '1px solid #38BDF8', boxShadow: '0 10px 30px rgba(56, 189, 248, 0.2)', color: '#fff' }}>
         
-        {/* BRAND CON NUEVO LOGO BIOMECÁNICO */}
+        {/* BRAND */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.5rem' }}>
             <LogoBiometraIcon />
@@ -216,82 +202,75 @@ export default function Login({ onLoginSuccess }) {
                 </div>
               </div>
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
-                Fecha de Nacimiento *
-              </label>
-              <input
-                type="date"
-                required
-                value={fechaNacimiento}
-                onChange={(e) => setFechaNacimiento(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.8rem',
-                  borderRadius: '8px',
-                  border: '1px solid #334155',
-                  backgroundColor: '#1E293B',
-                  color: '#fff',
-                  boxSizing: 'border-box',
-                  colorScheme: 'dark'
-                }}
-              />
-              <small style={{ color: '#94A3B8', fontSize: '0.75rem' }}>
-                Debes tener al menos 18 años para registrarte.
-              </small>
-            </div>
+              {role === 'ADMIN' && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
+                    Clave de autorización de administrador
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Ingresa la clave de administrador"
+                    value={adminSecret}
+                    onChange={(e) => setAdminSecret(e.target.value)}
+                    style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #38BDF8', backgroundColor: '#1E293B', color: '#fff', boxSizing: 'border-box' }}
+                  />
+                  <small style={{ color: '#94A3B8', fontSize: '0.75rem' }}>
+                    Se requiere autorización para crear una cuenta administrativa.
+                  </small>
+                </div>
+              )}
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
-                Género (opcional)
-              </label>
-              <select
-                value={genero}
-                onChange={(e) => setGenero(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.8rem',
-                  borderRadius: '8px',
-                  border: '1px solid #334155',
-                  backgroundColor: '#1E293B',
-                  color: '#fff',
-                  boxSizing: 'border-box'
-                }}
-              >
-                <option value="">Prefiero no indicar</option>
-                <option value="Hombre">Hombre</option>
-                <option value="Mujer">Mujer</option>
-                <option value="Otro">Otro</option>
-              </select>
-            </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
+                  Fecha de Nacimiento *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={fechaNacimiento}
+                  onChange={(e) => setFechaNacimiento(e.target.value)}
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', backgroundColor: '#1E293B', color: '#fff', boxSizing: 'border-box', colorScheme: 'dark' }}
+                />
+                <small style={{ color: '#94A3B8', fontSize: '0.75rem' }}>
+                  Debes tener al menos 18 años para registrarte.
+                </small>
+              </div>
 
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
-                Estatura en metros (opcional)
-              </label>
-              <input
-                type="number"
-                min="0.50"
-                max="2.50"
-                step="0.01"
-                placeholder="Ej. 1.74"
-                value={altura}
-                onChange={(e) => setAltura(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.8rem',
-                  borderRadius: '8px',
-                  border: '1px solid #334155',
-                  backgroundColor: '#1E293B',
-                  color: '#fff',
-                  boxSizing: 'border-box'
-                }}
-              />
-              <small style={{ color: '#94A3B8', fontSize: '0.75rem' }}>
-                Ingresa tu estatura en metros, por ejemplo: 1.74.
-              </small>
-            </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
+                  Género (opcional)
+                </label>
+                <select
+                  value={genero}
+                  onChange={(e) => setGenero(e.target.value)}
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', backgroundColor: '#1E293B', color: '#fff', boxSizing: 'border-box' }}
+                >
+                  <option value="">Prefiero no indicar</option>
+                  <option value="Hombre">Hombre</option>
+                  <option value="Mujer">Mujer</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
 
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', color: '#CBD5E1', fontSize: '0.85rem', fontWeight: '600' }}>
+                  Estatura en metros (opcional)
+                </label>
+                <input
+                  type="number"
+                  min="0.50"
+                  max="2.50"
+                  step="0.01"
+                  placeholder="Ej. 1.74"
+                  value={altura}
+                  onChange={(e) => setAltura(e.target.value)}
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid #334155', backgroundColor: '#1E293B', color: '#fff', boxSizing: 'border-box' }}
+                />
+                <small style={{ color: '#94A3B8', fontSize: '0.75rem' }}>
+                  Ingresa tu estatura en metros, por ejemplo: 1.74.
+                </small>
+              </div>
             </>
           )}
 
@@ -329,51 +308,39 @@ export default function Login({ onLoginSuccess }) {
         )}
       </div>
 
-  
       {/* MODAL DE TÉRMINOS Y CONDICIONES */}
       {showTermsModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(11, 17, 32, 0.92)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '1.5rem', boxSizing: 'border-box', backdropFilter: 'blur(6px)' }}>
           <div style={{ backgroundColor: '#0F172A', border: '1px solid #38BDF8', borderRadius: '20px', maxWidth: '700px', width: '100%', maxHeight: '88vh', display: 'flex', flexDirection: 'column', padding: '2rem', color: '#fff', boxShadow: '0 25px 50px rgba(0,0,0,0.7)' }}>
-            
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '1rem', borderBottom: '1px solid #1E293B', paddingBottom: '0.8rem' }}>
               <LogoBiometraIcon />
               <h2 style={{ margin: 0, color: '#38BDF8', fontSize: '1.35rem', fontWeight: '800' }}>
                 Marco Legal, Términos de Servicio y Privacidad Biomécnica
               </h2>
             </div>
-            
             <div style={{ overflowY: 'auto', flex: 1, paddingRight: '0.8rem', color: '#CBD5E1', fontSize: '0.85rem', lineHeight: '1.65' }}>
               <p style={{ fontStyle: 'italic', color: '#94A3B8', marginBottom: '1rem' }}>Última actualización: Edición Oficial Biometra Chile SpA.</p>
-
               <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>1. Aceptación de Condiciones de Uso</h4>
               <p style={{ margin: '0 0 0.8rem 0' }}>Al hacer clic en "Aceptar", registrar una cuenta de usuario o hacer uso interactivo de los módulos analíticos de Biometra, usted declara expresamente ser mayor de edad y acepta en su totalidad este Contrato Marco de Adhesión para el uso de Software como Servicio (SaaS).</p>
-
               <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>2. Objeto del Software y Deslinde Kinésico/Médico</h4>
               <p style={{ margin: '0 0 0.8rem 0' }}>Biometra constituye una plataforma informática de visión por computadora destinada al cálculo de vectores angulares y estimación postural para la actividad física general. Los resultados no reemplazan una evaluación médica o kinésica presencial.</p>
-
               <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>3. Tratamiento de Datos Biométricos</h4>
               <p style={{ margin: '0 0 0.8rem 0' }}>Usted consiente expresamente el procesamiento automatizado de los videos subidos para segmentación de puntos de articulación (pose estimation), los cuales se procesan bajo estrictos estándares de seguridad.</p>
-
               <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>4. Exención de Responsabilidad Física</h4>
               <p style={{ margin: '0 0 0.8rem 0' }}>El usuario reconoce que la realización de levantamientos de pesas y sobrecargas conlleva riesgos inherentes. Biometra SpA no asume responsabilidad civil o penal por lesiones derivadas de la ejecución física.</p>
-
               <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>5. Propiedad Intelectual</h4>
               <p style={{ margin: '0 0 0.8rem 0' }}>Queda prohibida la ingeniería inversa, descompilación o extracción no autorizada del código fuente y algoritmos propios de la plataforma.</p>
-
               <h4 style={{ color: '#00FF87', margin: '1.2rem 0 0.3rem 0' }}>6. Legislación Aplicable</h4>
               <p style={{ margin: '0 0 0.8rem 0' }}>Este acuerdo se rige por las leyes de la República de Chile y los tribunales ordinarios de Santiago.</p>
             </div>
-
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #1E293B' }}>
               <button onClick={() => { setAcceptedTerms(true); setShowTermsModal(false); }} style={{ flex: 1, backgroundColor: '#00FF87', color: '#0F172A', border: 'none', padding: '0.8rem', borderRadius: '8px', fontWeight: '900', cursor: 'pointer', fontSize: '0.95rem' }}>
                 Entendido, Aceptar Términos Legales
               </button>
             </div>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }
